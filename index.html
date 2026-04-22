@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Freskvv Hub — Digital Innovation Studio</title>
+  <meta name="description" content="Freskvv Hub is a premium digital innovation studio offering cutting-edge solutions in design, development, and digital strategy.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ══════════ PRELOADER ══════════ -->
+  <div id="preloader">
+    <div class="preloader-inner">
+      <div class="preloader-logo-ring"></div>
+      <div class="preloader-brand">FRESKVV HUB</div>
+      <div class="preloader-bar"><div class="preloader-bar-fill"></div></div>
+      <div class="preloader-tagline">Loading Experience...</div>
+    </div>
+  </div>
+
+  <!-- ══════════ 3D CANVAS ══════════ -->
+  <canvas id="three-canvas"></canvas>
+
+  <!-- ══════════ GLOBAL ANNOUNCEMENT BAR ══════════ -->
+  <div id="announcement-bar" class="announcement-bar hidden">
+    <div class="announcement-track">
+      <span id="announcement-text">Welcome to Freskvv Hub — Digital Evolution Starts Here!</span>
+    </div>
+  </div>
+
+  <!-- ══════════ NAVIGATION ══════════ -->
+  <nav id="navbar" class="glass-panel">
+    <div class="nav-left">
+      <div class="nav-logo" id="nav-logo">
+        <svg width="32" height="32" viewBox="0 0 100 100" class="logo-svg">
+          <defs>
+            <linearGradient id="metalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.8"/>
+              <stop offset="30%" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="70%" stop-color="var(--accent)" stop-opacity="0.5"/>
+              <stop offset="100%" stop-color="#ffffff" stop-opacity="0.9"/>
+            </linearGradient>
+          </defs>
+          <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" fill="none" stroke="url(#metalGrad)" stroke-width="5"/>
+          <polygon points="50,20 80,35 80,65 50,80 20,65 20,35" fill="url(#metalGrad)" opacity="0.3"/>
+          <text x="50" y="58" text-anchor="middle" fill="url(#metalGrad)" font-size="32" font-weight="900" font-family="Inter">F</text>
+        </svg>
+        <span class="nav-brand-text">Freskvv Hub</span>
+      </div>
+    </div>
+    <div class="nav-center">
+      <a href="#home" class="nav-link active" data-icon="nav_home"><span data-i18n="nav_home">Home</span></a>
+      <a href="#updates" class="nav-link" data-icon="nav_updates"><span data-i18n="nav_updates">Updates</span></a>
+      <a href="#services" class="nav-link" data-icon="nav_services"><span data-i18n="nav_services">Services</span></a>
+      <a href="#about" class="nav-link" data-icon="nav_about"><span data-i18n="nav_about">About</span></a>
+      <a href="#contact" class="nav-link" data-icon="nav_contact"><span data-i18n="nav_contact">Contact</span></a>
+    </div>
+    <div class="nav-right">
+      <button id="theme-picker-btn" class="nav-icon-btn" title="Accent Color" data-icon="theme"></button>
+      <button id="lang-toggle-btn" class="nav-icon-btn lang-btn" data-icon="lang">EN</button>
+      <button id="auth-login-btn" class="nav-icon-btn" title="Sign In" data-icon="user"></button>
+      <button id="auth-logout-btn" class="nav-icon-btn" title="Sign Out" style="display:none" data-icon="logout"></button>
+      <button id="admin-dash-btn" class="nav-icon-btn admin-glow" title="Admin Dashboard" style="display:none" data-icon="admin"></button>
+    </div>
+  </nav>
+
+  <!-- ══════════ THEME PICKER PANEL ══════════ -->
+  <div id="theme-panel" class="glass-panel theme-panel hidden">
+    <div class="theme-panel-title" data-i18n="theme_title">Accent Color</div>
+    <div class="theme-presets">
+      <button class="color-dot" data-color="#00d4ff" style="--dot:#00d4ff" title="Cyan"></button>
+      <button class="color-dot" data-color="#a855f7" style="--dot:#a855f7" title="Purple"></button>
+      <button class="color-dot" data-color="#f43f5e" style="--dot:#f43f5e" title="Rose"></button>
+      <button class="color-dot" data-color="#22c55e" style="--dot:#22c55e" title="Green"></button>
+      <button class="color-dot" data-color="#f59e0b" style="--dot:#f59e0b" title="Amber"></button>
+      <button class="color-dot" data-color="#ec4899" style="--dot:#ec4899" title="Pink"></button>
+      <button class="color-dot" data-color="#06b6d4" style="--dot:#06b6d4" title="Teal"></button>
+      <button class="color-dot" data-color="#8b5cf6" style="--dot:#8b5cf6" title="Violet"></button>
+    </div>
+    <div class="theme-custom-row">
+      <label data-i18n="theme_custom">Custom</label>
+      <input type="color" id="custom-color-input" value="#00d4ff">
+    </div>
+  </div>
+
+  <!-- ══════════ HERO SECTION ══════════ -->
+  <section id="home" class="hero-section">
+    <div class="hero-content">
+      <div class="hero-badge glass-panel" data-i18n="hero_badge">✦ Digital Innovation Studio</div>
+      <h1 class="hero-title">
+        <span data-i18n="hero_title_1">Welcome to</span><br>
+        <span class="hero-title-accent">Freskvv Hub</span>
+      </h1>
+      <p class="hero-subtitle" data-i18n="hero_subtitle">We craft premium digital experiences that push boundaries and redefine what's possible.</p>
+      <div class="hero-actions">
+        <a href="#updates" class="btn-apple btn-primary" data-i18n="hero_cta1">Explore Updates</a>
+        <a href="#contact" class="btn-apple btn-secondary" data-i18n="hero_cta2">Get in Touch</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ LATEST UPDATES FEED ══════════ -->
+  <section id="updates" class="section-updates">
+    <div class="section-header">
+      <h2 class="section-title" data-i18n="updates_title">Latest Updates</h2>
+      <p class="section-subtitle" data-i18n="updates_subtitle">Stay up to date with our newest releases and announcements.</p>
+    </div>
+    <div class="updates-feed" id="updates-feed">
+      <!-- Cards injected by JS -->
+    </div>
+  </section>
+
+  <!-- ══════════ SERVICES SECTION ══════════ -->
+  <section id="services" class="section-services">
+    <div class="section-header">
+      <h2 class="section-title" data-i18n="svc_title">Our Services</h2>
+      <p class="section-subtitle" data-i18n="svc_subtitle">Premium digital solutions tailored for your success.</p>
+    </div>
+    <div class="services-grid" id="services-grid">
+      <!-- Injected by JS -->
+    </div>
+  </section>
+
+  <!-- ══════════ ABOUT SECTION ══════════ -->
+  <section id="about" class="section-about">
+    <div class="about-container">
+      <div class="about-avatar-wrap">
+        <div class="about-avatar-ring"></div>
+        <div class="about-avatar-initials">F</div>
+      </div>
+      <div class="about-info">
+        <h2 class="section-title" data-i18n="about_title">About Fares</h2>
+        <p class="about-age" id="about-age"></p>
+        <p class="about-bio" data-i18n="about_bio">Founder & Creative Director of Freskvv Hub. A passionate digital innovator specializing in web development, graphic design, and social media strategy. Building premium digital experiences that elevate brands and drive results.</p>
+        <div class="about-stats">
+          <div class="stat-item"><span class="stat-num">50+</span><span class="stat-label" data-i18n="stat_projects">Projects</span></div>
+          <div class="stat-item"><span class="stat-num">10K+</span><span class="stat-label" data-i18n="stat_clients">Clients</span></div>
+          <div class="stat-item"><span class="stat-num" id="about-age-num"></span><span class="stat-label" data-i18n="stat_age">Years Old</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ COMING SOON ══════════ -->
+  <section id="coming-soon" class="section-coming-soon">
+    <div class="section-header">
+      <h2 class="section-title" data-i18n="cs_title">Coming Soon</h2>
+      <p class="section-subtitle" data-i18n="cs_subtitle">Exciting new platforms we're building for you.</p>
+    </div>
+    <div class="cs-grid">
+      <div class="cs-card glass-panel">
+        <div class="cs-icon">🎮</div>
+        <h3 data-i18n="cs_games">Games Charging Store</h3>
+        <p data-i18n="cs_games_desc">Top up your favorite games instantly with the best prices.</p>
+        <span class="cs-badge" data-i18n="cs_badge">Coming Soon</span>
+      </div>
+      <div class="cs-card glass-panel">
+        <div class="cs-icon">📱</div>
+        <h3 data-i18n="cs_apps">App Store</h3>
+        <p data-i18n="cs_apps_desc">Discover curated premium apps and tools for creators.</p>
+        <span class="cs-badge" data-i18n="cs_badge">Coming Soon</span>
+      </div>
+      <div class="cs-card glass-panel">
+        <div class="cs-icon">🎓</div>
+        <h3 data-i18n="cs_edu">Educational Platform</h3>
+        <p data-i18n="cs_edu_desc">Learn digital skills from industry experts, step by step.</p>
+        <span class="cs-badge" data-i18n="cs_badge">Coming Soon</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════ CONTACT SECTION ══════════ -->
+  <section id="contact" class="section-contact">
+    <div class="section-header">
+      <h2 class="section-title" data-i18n="contact_title">Get in Touch</h2>
+      <p class="section-subtitle" data-i18n="contact_subtitle">Ready to start your project? Reach out to us anytime.</p>
+    </div>
+    <div class="contact-actions">
+      <a href="https://wa.me/2001221640301" target="_blank" class="btn-apple btn-primary contact-wa-btn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.75.75 0 00.917.918l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.387 0-4.674-.8-6.538-2.27a.75.75 0 00-.606-.127l-3.16 1.06 1.06-3.16a.75.75 0 00-.127-.606A9.953 9.953 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+        <span data-i18n="contact_wa">Chat on WhatsApp</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ══════════ FOOTER ══════════ -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="footer-logo-text">Freskvv Hub</span>
+        <p class="footer-tagline" data-i18n="footer_tagline">Crafting Digital Excellence</p>
+      </div>
+      <div class="footer-socials">
+        <a href="https://instagram.com/freskvvhub" target="_blank" class="social-link" title="Instagram">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none"/></svg>
+        </a>
+        <a href="#" class="social-link" title="Facebook">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+        </a>
+        <a href="#" class="social-link" title="X (Twitter)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4l6.5 8L4 20h2l5.5-6.8L16 20h4l-6.8-8.5L20 4h-2l-5.2 6.3L9 4H4z"/></svg>
+        </a>
+        <a href="#" class="social-link social-coming-soon" title="Telegram — Coming Soon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.2 4.4L2.4 10.8c-.6.2-.6 1.1 0 1.3l4.5 1.7 1.7 5.4c.1.4.6.6 1 .3l2.4-2 4.2 3.1c.4.3 1 .1 1.1-.4L21.8 5.2c.2-.6-.3-1.1-.6-.8z"/></svg>
+        </a>
+      </div>
+      <p class="footer-copy">&copy; 2026 Freskvv Hub. <span data-i18n="footer_rights">All rights reserved.</span></p>
+    </div>
+  </footer>
+
+  <!-- ══════════ LAYER 1: CATEGORY OVERLAY (Sub-Services) ══════════ -->
+  <div id="category-overlay" class="modal-overlay hidden" style="z-index: 2000;">
+    <div class="modal-content glass-panel" style="max-width: 900px;">
+      <button class="modal-close" onclick="closeModal('category-overlay')">&times;</button>
+      <div id="category-content" class="sub-page-inner">
+        <!-- Sub-service cards injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ LAYER 2: DEEP DETAILS ══════════ -->
+  <div id="sub-detail-modal" class="modal-overlay hidden" style="z-index: 2500;">
+    <div class="modal-content glass-panel" style="max-width: 600px;">
+      <button class="modal-close" onclick="closeModal('sub-detail-modal')">&times;</button>
+      <div id="sub-detail-content">
+        <!-- Deep details injected here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ LAYER 3: ORDER FORM ══════════ -->
+  <div id="order-modal" class="modal-overlay hidden" style="z-index: 3000;">
+    <div class="modal-content glass-panel modal-form-content">
+      <button class="modal-close" id="order-close-btn">&times;</button>
+      <h3 class="modal-form-title" data-i18n="order_title">Order Now</h3>
+      <p class="modal-service-name" id="order-service-name"></p>
+      <form id="order-form" class="order-form">
+        <div class="form-group">
+          <label data-i18n="form_name">Full Name</label>
+          <input type="text" id="form-name" required placeholder="Your name">
+        </div>
+        <div class="form-row" style="display: flex; gap: 16px;">
+          <div class="form-group" style="flex: 1;">
+            <label data-i18n="form_phone">Phone Number</label>
+            <input type="tel" id="form-phone" required placeholder="+20...">
+          </div>
+          <div class="form-group" style="flex: 1;">
+            <label data-i18n="form_email">Email</label>
+            <input type="email" id="form-email" required placeholder="you@email.com">
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="form_type">Type</label>
+          <select id="form-type">
+            <option value="inquiry" data-i18n="form_inquiry">Inquiry</option>
+            <option value="purchase" data-i18n="form_purchase">Purchase</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="form_comments">Comments/Notes (Optional)</label>
+          <textarea id="form-comments" rows="3" placeholder="Additional details..."></textarea>
+        </div>
+        <button type="submit" class="btn-apple btn-primary form-submit-btn" data-icon="social_wa">
+          <span data-i18n="form_submit">Send via WhatsApp</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════ MAINTENANCE OVERLAY ══════════ -->
+  <div id="maintenance-overlay" class="maintenance-overlay hidden">
+    <div class="maintenance-inner">
+      <div class="maintenance-icon">🔧</div>
+      <h2>Under Maintenance</h2>
+      <p>We're making things even better. Please check back soon!</p>
+    </div>
+  </div>
+
+  <!-- ══════════ POPUP AD ══════════ -->
+  <div id="popup-ad" class="modal-overlay hidden">
+    <div class="modal-content glass-panel popup-ad-content">
+      <button class="modal-close" id="popup-ad-close">&times;</button>
+      <img id="popup-ad-img" src="" alt="Ad" class="popup-ad-img">
+      <p id="popup-ad-text" class="popup-ad-text"></p>
+      <a id="popup-ad-link" href="#" target="_blank" class="btn-apple btn-primary popup-ad-link">Learn More</a>
+    </div>
+  </div>
+
+  <!-- ══════════ AUTH MODAL ══════════ -->
+  <div id="auth-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel modal-form-content">
+      <button class="modal-close" id="auth-close-btn">&times;</button>
+      <h3 id="auth-title" class="modal-form-title">Sign In</h3>
+      <p id="auth-error" class="auth-error"></p>
+      <form id="auth-form" class="order-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="auth-email" required placeholder="you@email.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="auth-password" required placeholder="Min 6 characters" minlength="6">
+        </div>
+        <button type="submit" class="btn-apple btn-primary form-submit-btn">
+          <span id="auth-submit-text">Sign In</span>
+        </button>
+      </form>
+      <button id="auth-toggle" class="auth-toggle-link">Don't have an account? Sign Up</button>
+    </div>
+  </div>
+
+  <!-- ══════════ MASTER ADMIN DASHBOARD ══════════ -->
+  <div id="admin-dashboard" class="admin-overlay hidden">
+    <div class="admin-panel sidebar-layout glass-panel">
+      <!-- SIDEBAR -->
+      <aside class="admin-sidebar">
+        <div class="sidebar-header">
+          <div class="admin-logo">🛡️</div>
+          <h3>F-Hub Admin</h3>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="admin-tab-btn active" data-tab="stats"><i class="fa-solid fa-chart-line"></i> Dashboard</button>
+          <button class="admin-tab-btn" data-tab="orders"><i class="fa-solid fa-cart-shopping"></i> Orders</button>
+          <button class="admin-tab-btn" data-tab="content"><i class="fa-solid fa-pen-to-square"></i> Content</button>
+          <button class="admin-tab-btn" data-tab="marketing"><i class="fa-solid fa-bullhorn"></i> Marketing</button>
+          <button class="admin-tab-btn" data-tab="chat"><i class="fa-solid fa-comments"></i> Live Chat</button>
+          <button class="admin-tab-btn" data-tab="system"><i class="fa-solid fa-gears"></i> System</button>
+        </nav>
+        <button id="admin-close-btn" class="sidebar-close-btn">Exit Dashboard</button>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="admin-main">
+        <!-- TOP STATS BAR -->
+        <header class="admin-main-header">
+          <div class="stat-card glass-panel">
+            <span class="stat-label">Total Users</span>
+            <strong id="stat-users">0</strong>
+          </div>
+          <div class="stat-card glass-panel">
+            <span class="stat-label">Total Orders</span>
+            <strong id="stat-orders">0</strong>
+          </div>
+          <div class="stat-card glass-panel">
+            <span class="stat-label">Active Tickets</span>
+            <strong id="stat-tickets">0</strong>
+          </div>
+        </header>
+
+        <div class="admin-body">
+          <!-- DASHBOARD OVERVIEW -->
+          <div id="tab-stats" class="admin-tab-content active">
+            <h3>Welcome back, Admin</h3>
+            <p>Select a module from the sidebar to manage your platform.</p>
+          </div>
+
+          <!-- ORDERS MANAGER -->
+          <div id="tab-orders" class="admin-tab-content">
+            <div class="section-header">
+              <h3>Orders Manager</h3>
+              <button id="refresh-orders-btn" class="btn-apple btn-secondary"><i class="fa-solid fa-sync"></i> Refresh</button>
+            </div>
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Client</th>
+                    <th>Service</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                  <!-- Orders injected here -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CONTENT & MEDIA EDITOR -->
+          <div id="tab-content" class="admin-tab-content">
+            <h3>Content & Media Editor</h3>
+            <div class="admin-form">
+              <div class="form-group">
+                <label>Select Service to Edit</label>
+                <select id="editor-service-select">
+                  <option value="net">Internet Services</option>
+                  <option value="social">Social Media</option>
+                  <option value="design">Graphic Design</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Price (EN)</label><input type="text" id="editor-price-en" placeholder="e.g. Starting from $99"></div>
+                <div class="form-group"><label>Price (AR)</label><input type="text" id="editor-price-ar" placeholder="مثلاً يبدأ من 99$"></div>
+              </div>
+              <div class="form-group"><label>Icon HTML/SVG</label><input type="text" id="editor-icon" placeholder="<i class='...'></i>"></div>
+              <div class="form-group"><label>Description (EN)</label><textarea id="editor-desc-en" rows="3"></textarea></div>
+              <div class="form-group"><label>Description (AR)</label><textarea id="editor-desc-ar" rows="3"></textarea></div>
+              <button id="editor-save-btn" class="btn-apple btn-primary">Update Asset Library</button>
+            </div>
+          </div>
+
+          <!-- MARKETING HUB -->
+          <div id="tab-marketing" class="admin-tab-content">
+            <h3>Marketing Hub</h3>
+            <div class="admin-form">
+              <div class="form-group"><label>Popup Image URL</label><input type="text" id="mkt-ad-image" placeholder="https://..."></div>
+              <div class="form-group"><label>Popup Heading</label><input type="text" id="mkt-ad-text" placeholder="Special Offer!"></div>
+              <div class="form-group"><label>Target Link</label><input type="text" id="mkt-ad-link" placeholder="https://..."></div>
+              <div class="admin-toggle-row"><label>Popup Enabled</label><input type="checkbox" id="mkt-ad-toggle" class="admin-checkbox"></div>
+              <button id="mkt-save-btn" class="btn-apple btn-primary">Save Changes</button>
+            </div>
+          </div>
+
+          <!-- LIVE CHAT -->
+          <div id="tab-chat" class="admin-tab-content">
+            <h3>Live Chat Support</h3>
+            <div id="admin-chat-messages" class="admin-chat-box"></div>
+            <form id="admin-chat-form" class="chat-input-row">
+              <input type="text" id="admin-chat-input" placeholder="Type a reply..." required>
+              <button type="submit" class="btn-apple btn-primary">Send</button>
+            </form>
+          </div>
+
+          <!-- SYSTEM SETTINGS -->
+          <div id="tab-system" class="admin-tab-content">
+            <h3>System Control</h3>
+            <div class="admin-maint-row">
+              <div class="maint-info">
+                <strong>Global Maintenance Mode</strong>
+                <p>When active, visitors see a "Coming Soon" page.</p>
+              </div>
+              <div class="maint-action">
+                <span id="maint-status-dot" class="status-dot"></span>
+                <span id="maint-status-text">OFF</span>
+                <button id="maint-toggle-btn" class="btn-apple btn-secondary">Toggle Status</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ══════════ SUPPORT CHOICE MODAL ══════════ -->
+  <div id="support-choice-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel modal-form-content" style="text-align:center;">
+      <button class="modal-close" id="support-choice-close">&times;</button>
+      <h3 class="modal-form-title" style="margin-bottom: 24px;">How can we help?</h3>
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <button id="btn-support-wa" class="btn-apple btn-secondary" style="justify-content:center; padding:16px; font-size:16px;" data-icon="social_wa">
+          WhatsApp Support
+        </button>
+        <button id="btn-support-chat" class="btn-apple btn-primary" style="justify-content:center; padding:16px; font-size:16px;" data-icon="support">
+          Live Chat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ WHATSAPP SUPPORT MODAL ══════════ -->
+  <div id="support-wa-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel modal-form-content">
+      <button class="modal-close" id="support-wa-close">&times;</button>
+      <h3 class="modal-form-title">WhatsApp Support</h3>
+      <form id="support-wa-form" class="order-form" style="margin-top:20px;">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="wa-form-name" required placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="wa-form-phone" required placeholder="+20...">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="wa-form-email" required placeholder="you@email.com">
+        </div>
+        <div class="form-group">
+          <label>Comments / Inquiry</label>
+          <textarea id="wa-form-comments" rows="4" required placeholder="How can we help you today?"></textarea>
+        </div>
+        <button type="submit" class="btn-apple btn-primary form-submit-btn" data-icon="social_wa">
+          <span>Start WhatsApp Chat</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════ GUEST PROMPT MODAL ══════════ -->
+  <div id="guest-prompt-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel modal-form-content">
+      <button class="modal-close" id="guest-prompt-close">&times;</button>
+      <h3 class="modal-form-title">Welcome</h3>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:20px;">Please enter your name to start the live chat.</p>
+      <form id="guest-prompt-form" class="order-form">
+        <div class="form-group">
+          <label>Your Name</label>
+          <input type="text" id="guest-name-input" required placeholder="John Doe">
+        </div>
+        <button type="submit" class="btn-apple btn-primary form-submit-btn">Start Chat</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ══════════ LIVE CHAT PANEL (Users) ══════════ -->
+  <div id="live-chat-panel" class="live-chat-panel glass-panel hidden">
+    <div class="chat-panel-header">
+      <strong>💬 Live Chat</strong>
+      <button id="chat-panel-close" class="modal-close" style="position:static;width:28px;height:28px;font-size:16px">&times;</button>
+    </div>
+    <div id="user-chat-messages" class="user-chat-box"></div>
+    <form id="user-chat-form" class="chat-input-row">
+      <input type="text" id="user-chat-input" placeholder="Type a message..." required>
+      <button type="submit" class="btn-apple btn-primary">Send</button>
+    </form>
+  </div>
+
+  <!-- ══════════ MASTER ADMIN DASHBOARD ══════════ -->
+  <div id="admin-dashboard" class="admin-overlay hidden">
+    <div class="admin-panel sidebar-layout glass-panel">
+      <!-- SIDEBAR -->
+      <aside class="admin-sidebar">
+        <div class="sidebar-header">
+          <div class="admin-logo">🛡️</div>
+          <h3>ADMIN</h3>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="admin-tab-btn active" data-tab="stats"><i class="fas fa-chart-line"></i> Stats</button>
+          <button class="admin-tab-btn" data-tab="orders"><i class="fas fa-shopping-cart"></i> Orders</button>
+          <button class="admin-tab-btn" data-tab="content"><i class="fas fa-edit"></i> Content</button>
+          <button class="admin-tab-btn" data-tab="marketing"><i class="fas fa-bullhorn"></i> Marketing</button>
+          <button class="admin-tab-btn" data-tab="chat"><i class="fas fa-comments"></i> Support</button>
+          <button class="admin-tab-btn" data-tab="system"><i class="fas fa-cog"></i> System</button>
+        </nav>
+        <button id="admin-close-btn" class="sidebar-close-btn">Close Dashboard</button>
+      </aside>
+
+      <!-- MAIN CONTENT -->
+      <main class="admin-main">
+        <!-- TOP STATS BAR -->
+        <header class="admin-main-header">
+          <div class="stat-card glass-panel">
+            <span class="stat-label">Total Users</span>
+            <strong id="stat-users">0</strong>
+          </div>
+          <div class="stat-card glass-panel">
+            <span class="stat-label">Total Orders</span>
+            <strong id="stat-orders">0</strong>
+          </div>
+          <div class="stat-card glass-panel">
+            <span class="stat-label">Active Tickets</span>
+            <strong id="stat-tickets">0</strong>
+          </div>
+        </header>
+
+        <div class="admin-body">
+          <!-- STATS TAB -->
+          <div id="tab-stats" class="admin-tab-content active">
+            <div class="section-header"><h3>Site Performance</h3></div>
+            <p style="color:var(--text-secondary)">Real-time analytics and user engagement metrics.</p>
+            <!-- Add charts here if needed later -->
+          </div>
+
+          <!-- ORDERS TAB -->
+          <div id="tab-orders" class="admin-tab-content">
+            <div class="section-header">
+              <h3>Live Orders</h3>
+              <button id="refresh-orders-btn" class="admin-sm-btn">Refresh</button>
+            </div>
+            <div class="admin-table-wrapper">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Customer</th>
+                    <th>Service</th>
+                    <th>Phone</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="orders-table-body">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- CONTENT TAB -->
+          <div id="tab-content" class="admin-tab-content">
+            <div class="section-header"><h3>Content Manager</h3></div>
+            <div class="admin-form">
+              <div class="form-group">
+                <label>Select Service to Edit</label>
+                <select id="editor-service-select">
+                  <option value="internet">Internet Services</option>
+                  <option value="social">Social Media</option>
+                  <option value="design">Graphic Design</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Price (EN)</label>
+                  <input type="text" id="editor-price-en" placeholder="e.g. Starting from $99">
+                </div>
+                <div class="form-group">
+                  <label>Price (AR)</label>
+                  <input type="text" id="editor-price-ar" placeholder="مثلاً يبدأ من 99 دولار">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Icon HTML (FontAwesome or SVG)</label>
+                <input type="text" id="editor-icon" placeholder="<i class='fas fa-...'></i>">
+              </div>
+              <div class="form-group">
+                <label>Description (EN)</label>
+                <textarea id="editor-desc-en"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Description (AR)</label>
+                <textarea id="editor-desc-ar"></textarea>
+              </div>
+              <button id="editor-save-btn" class="btn-apple btn-primary">Save Asset Changes</button>
+
+              <hr style="margin:20px 0; opacity:0.1">
+              <h3>Asset Library</h3>
+              <div class="form-group">
+                <label>Site Logo URL</label>
+                <input type="text" id="asset-logo-url" placeholder="https://...">
+              </div>
+              <div class="form-group">
+                <label>Hero Background Image</label>
+                <input type="text" id="asset-hero-url" placeholder="https://...">
+              </div>
+              <button id="asset-save-btn" class="btn-apple btn-primary">Update Library</button>
+            </div>
+          </div>
+
+          <!-- MARKETING TAB -->
+          <div id="tab-marketing" class="admin-tab-content">
+            <div class="section-header"><h3>Marketing Hub</h3></div>
+            <div class="admin-form">
+              <h4>Entry Popup Ad</h4>
+              <div class="form-group">
+                <label>Image URL</label>
+                <input type="text" id="mkt-ad-image">
+              </div>
+              <div class="form-group">
+                <label>Heading Text</label>
+                <input type="text" id="mkt-ad-text">
+              </div>
+              <div class="form-group">
+                <label>Action Link</label>
+                <input type="text" id="mkt-ad-link">
+              </div>
+              <div class="admin-toggle-row" style="margin-bottom:10px;">
+                <label>Enable Popup</label>
+                <input type="checkbox" id="mkt-ad-toggle" class="admin-checkbox">
+              </div>
+
+              <hr style="margin:20px 0; opacity:0.1">
+              <h4>Global Announcement</h4>
+              <div class="form-group">
+                <label>Ticker Text</label>
+                <input type="text" id="mkt-news-text" placeholder="Special offer! 20% off all services...">
+              </div>
+              <div class="admin-toggle-row">
+                <label>Show Announcement Bar</label>
+                <input type="checkbox" id="mkt-news-toggle" class="admin-checkbox">
+              </div>
+
+              <button id="mkt-save-btn" class="btn-apple btn-primary" style="margin-top:20px;">Save Marketing Data</button>
+            </div>
+          </div>
+
+          <!-- SUPPORT TAB -->
+          <div id="tab-chat" class="admin-tab-content">
+            <div class="section-header"><h3>Support & Live Chat</h3></div>
+            <div class="admin-chat-box" id="admin-chat-messages">
+              <!-- Messages injected here -->
+            </div>
+            <form id="admin-chat-form" class="chat-input-row">
+              <input type="text" id="admin-chat-input" placeholder="Reply to customer..." required>
+              <button type="submit" class="btn-apple btn-primary">Send Message</button>
+            </form>
+            <hr style="margin:32px 0; opacity:0.1">
+            <h4>WhatsApp Clicks Log</h4>
+            <div id="wa-clicks-log" style="font-size:12px; color:var(--text-secondary)">
+              <!-- Log entries -->
+            </div>
+          </div>
+
+          <!-- SYSTEM TAB -->
+          <div id="tab-system" class="admin-tab-content">
+            <div class="section-header"><h3>System Settings</h3></div>
+            <div class="admin-form">
+              <div class="admin-maint-row">
+                <div class="maint-info">
+                  <strong>Maintenance Mode</strong>
+                  <p>Hide site from visitors while working.</p>
+                </div>
+                <div class="maint-action">
+                  <span id="maint-status-dot" class="status-dot"></span>
+                  <span id="maint-status-text">OFF</span>
+                  <button id="maint-toggle-btn" class="btn-apple btn-secondary">Toggle</button>
+                </div>
+              </div>
+
+              <hr style="margin:24px 0; opacity:0.1">
+              <h4>Social Media Links</h4>
+              <div class="form-group">
+                <label>WhatsApp Number (with country code)</label>
+                <input type="text" id="sys-wa-link">
+              </div>
+              <div class="form-group">
+                <label>Instagram URL</label>
+                <input type="text" id="sys-ig-link">
+              </div>
+              <div class="form-group">
+                <label>Telegram URL</label>
+                <input type="text" id="sys-tg-link">
+              </div>
+              <button id="sys-save-btn" class="btn-apple btn-primary" style="margin-top:10px;">Update Global Links</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="admin-toast" class="admin-toast"></div>
+
+  <!-- ══════════ DAILY OFFERS (Bottom-Left) ══════════ -->
+  <button id="daily-offers-btn" class="fixed-corner-btn left glass-panel" data-icon="daily_offers">
+    <span data-i18n="daily_offers">Daily Offers</span>
+  </button>
+
+  <!-- ══════════ SUPPORT / LIVE CHAT (Bottom-Right) ══════════ -->
+  <button id="support-btn" class="fixed-corner-btn right glass-panel" data-icon="support">
+    <span data-i18n="support_chat">Support</span>
+  </button>
+
+  <!-- ══════════ SCRIPTS ══════════ -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
