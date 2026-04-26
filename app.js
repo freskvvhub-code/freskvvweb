@@ -9,7 +9,7 @@ window.addEventListener('load', function () {
 });
 
 /* ─── GLOBALS ─── */
-var FH = { admins: ['freskvvtec@gmail.com'] }; // UPDATE YOUR ADMIN EMAIL HERE
+var FH = { admins: ['freskvv.services@gmail.com'] };
 var _signUpMode = false;
 var _chatUnsub = null;
 var _currentLang = 'en';
@@ -173,9 +173,10 @@ function initAuthUI() {
           });
         } else {
           cred = await firebase.auth().signInWithEmailAndPassword(email, pass);
+          var user = cred.user;
+          await user.getIdToken(true); // Force token refresh to sync Admin status
+          document.getElementById('auth-modal').classList.add('hidden');
         }
-
-        document.getElementById('auth-modal').classList.add('hidden');
 
       } catch (ex) {
         Swal.fire({ icon: 'error', title: 'تنبيه', text: translateAuthError(ex), confirmButtonColor: '#b5179e' });
@@ -305,7 +306,10 @@ firebase.auth().onAuthStateChanged(async function (user) {
     // If the user just verified their email (or any reload context), force a token refresh
     try { await user.reload(); } catch (e) {}
     if (user.emailVerified) {
-      try { await user.getIdToken(true); } catch (e) {}
+      try { 
+        // Force refresh the token to update custom claims or status immediately
+        await user.getIdToken(true); 
+      } catch (e) { console.error('Token Refresh Error:', e); }
     }
 
     if (!user.emailVerified) {

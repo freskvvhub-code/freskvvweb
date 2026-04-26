@@ -4,7 +4,7 @@
 
 window._aChatUnsub = null;
 window._aActiveUid = null;
-var _ADMIN_OK = ['freskvvtec@gmail.com']; // UPDATE YOUR ADMIN EMAIL HERE
+var _ADMIN_OK = ['freskvv.services@gmail.com'];
 
 /* ─── Admin Guard ─── */
 function adminGuard() {
