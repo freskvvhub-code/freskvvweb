@@ -262,13 +262,46 @@ function initAuthUI() {
 }
 
 /* ─── AUTH STATE ─── */
+// Create and show spinner immediately
+var authSpinner = document.createElement('div');
+authSpinner.id = 'auth-check-spinner';
+authSpinner.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#05060f;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;transition:opacity 0.3s ease;';
+authSpinner.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="font-size:48px;color:var(--accent);margin-bottom:16px;"></i><h2 style="font-size:16px;">جاري التحقق من الحساب...</h2>';
+document.body.appendChild(authSpinner);
+
 firebase.auth().onAuthStateChanged(async function (user) {
   var btn = document.getElementById('auth-login-btn');
   window._currentUser = user;
 
+  // Handle email verification action code
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get('mode');
+  const oobCode = params.get('oobCode');
+
+  if (mode === 'verifyEmail' && oobCode) {
+    try {
+      await firebase.auth().applyActionCode(oobCode);
+      window.history.replaceState(null, null, window.location.pathname);
+      Swal.fire({ icon: 'success', title: 'تم التفعيل', text: 'تم تفعيل بريدك الإلكتروني بنجاح!', confirmButtonColor: '#b5179e' });
+      if (user) {
+        await user.reload();
+      }
+    } catch (e) {
+      window.history.replaceState(null, null, window.location.pathname);
+      Swal.fire({ icon: 'error', title: 'خطأ', text: translateAuthError(e), confirmButtonColor: '#b5179e' });
+    }
+  }
+
   if (user) {
+    // If the user just verified their email (or any reload context), force a token refresh
+    try { await user.reload(); } catch (e) {}
+    if (user.emailVerified) {
+      try { await user.getIdToken(true); } catch (e) {}
+    }
+
     if (!user.emailVerified) {
       document.getElementById('verify-shield-modal').classList.remove('hidden');
+      if (authSpinner) { authSpinner.style.opacity = '0'; setTimeout(() => authSpinner.remove(), 300); }
       return; // Stop rendering the logged-in state
     } else {
       var vShield = document.getElementById('verify-shield-modal');
@@ -312,6 +345,12 @@ firebase.auth().onAuthStateChanged(async function (user) {
   } else {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-user-astronaut"></i>';
     var ab2 = document.getElementById('nav-admin-link'); if (ab2) ab2.remove();
+  }
+
+  // Remove spinner after auth state is resolved
+  if (authSpinner && authSpinner.parentNode) {
+    authSpinner.style.opacity = '0';
+    setTimeout(() => { if (authSpinner.parentNode) authSpinner.remove(); }, 300);
   }
 });
 
