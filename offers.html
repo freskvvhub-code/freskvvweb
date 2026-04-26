@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Daily Offers — Freskvv Hub</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23b5179e'/%3E%3Cstop offset='100%25' stop-color='%237b2ff7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpolygon points='50,8 90,30 90,70 50,92 10,70 10,30' fill='url(%23g)' opacity='0.9'/%3E%3Ctext x='50' y='60' text-anchor='middle' fill='white' font-size='36' font-weight='900' font-family='sans-serif'%3EF%3C/text%3E%3C/svg%3E">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .offers-hero { padding: 120px 24px 60px; text-align: center; }
+    .offers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; max-width: 1200px; margin: 40px auto; padding: 0 24px; }
+    .offer-card { background: var(--bg-card); border: 1px solid var(--border-glass); border-radius: 24px; overflow: hidden; transition: 0.3s; position: relative; }
+    .offer-card:hover { transform: translateY(-10px); border-color: var(--accent); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    .offer-img { width: 100%; height: 200px; object-fit: cover; }
+    .offer-body { padding: 24px; }
+    .offer-badge { position: absolute; top: 16px; right: 16px; background: var(--accent); color: #000; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 800; }
+    .offer-price-row { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+    .old-price { text-decoration: line-through; opacity: 0.5; font-size: 16px; }
+    .new-price { color: var(--accent); font-size: 28px; font-weight: 900; }
+    .offer-timer { font-family: monospace; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; text-align: center; font-size: 14px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
+    .offer-empty { text-align: center; grid-column: 1/-1; padding: 60px 20px; }
+    .offer-empty i { font-size: 64px; color: var(--accent); margin-bottom: 20px; opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+  <div id="preloader">
+    <div class="preloader-inner"><div class="preloader-logo-ring"></div><div class="preloader-brand">FRESKVV HUB</div></div>
+  </div>
+
+  <canvas id="three-canvas"></canvas>
+
+  <nav id="navbar" class="glass-panel">
+    <div class="nav-left">
+      <a href="index.html" class="nav-logo">
+        <span class="nav-brand-text">Freskvv Hub</span>
+      </a>
+    </div>
+    <div class="nav-center">
+      <a href="index.html#home" class="nav-link">Home</a>
+      <a href="index.html#services-hierarchy" class="nav-link">Services</a>
+      <a href="offers.html" class="nav-link active">Offers</a>
+    </div>
+    <div class="nav-right">
+      <button id="lang-toggle-btn" class="nav-icon-btn">ع</button>
+      <button id="auth-login-btn" class="nav-icon-btn"><i class="fa-solid fa-user-astronaut"></i></button>
+    </div>
+  </nav>
+
+  <div class="offers-hero">
+    <h1 class="hero-title"><span class="hero-title-accent" data-en="Special Offers" data-ar="العروض الخاصة">Special Offers</span></h1>
+    <p class="hero-subtitle" data-en="Exclusive deals and limited-time discounts on our premium services." data-ar="خصومات حصرية وعروض محدودة الوقت على خدماتنا المتميزة.">Exclusive deals and limited-time discounts on our premium services.</p>
+  </div>
+
+  <div id="offers-grid" class="offers-grid">
+    <!-- Offers will be injected here -->
+  </div>
+
+  <!-- AUTH MODAL -->
+  <div id="auth-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel auth-modal-content">
+      <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      <div class="auth-header">
+        <div class="auth-icon-ring"><i class="fa-solid fa-user-astronaut"></i></div>
+        <h2 id="auth-title">Welcome back</h2>
+      </div>
+      <form id="auth-form">
+        <div class="input-group"><i class="fa-solid fa-envelope"></i><input type="email" id="auth-email" placeholder="Email Address" required></div>
+        <div class="input-group"><i class="fa-solid fa-lock"></i><input type="password" id="auth-pass" placeholder="Password" required></div>
+        <button type="submit" class="btn-apple btn-primary auth-submit">Continue</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ORDER MODAL (Reuse from index.html) -->
+  <div id="order-modal" class="modal-overlay hidden">
+    <div class="modal-content glass-panel">
+      <button class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+      <div class="section-header">
+        <h2 class="section-title">Complete Order</h2>
+        <p class="section-subtitle">Please provide your details.</p>
+      </div>
+      <form id="order-form">
+        <input type="hidden" id="order-service-name">
+        <div class="fg"><label>Full Name</label><input type="text" id="order-sender-name" required></div>
+        <div class="fg"><label>WhatsApp Number</label><input type="text" id="order-sender-number" required></div>
+        <div id="price-display" style="font-size:24px; font-weight:900; color:var(--accent); text-align:center; margin-bottom:20px;">$0</div>
+        <button type="submit" class="btn-apple btn-primary" style="width:100%; justify-content:center;">Submit Order</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

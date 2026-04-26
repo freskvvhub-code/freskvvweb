@@ -278,7 +278,8 @@ async function loadOffersAdmin() {
     grid.innerHTML = snap.docs.map(function(doc) { 
       var o = doc.data(); 
       var expStr = o.expirationDate ? new Date(o.expirationDate).toLocaleString() : 'N/A';
-      return '<div class="pkg-admin-item"><h4>' + (o.title_en || o.title) + '</h4><p style="font-size:11px;opacity:0.7;margin:6px 0;">' + (o.description_en || o.description || '') + '</p><div style="margin:8px 0;"><span style="text-decoration:line-through;opacity:0.5;margin-right:8px;">$' + o.originalPrice + '</span><span style="color:#a855f7;font-weight:bold;">$' + o.salePrice + '</span></div><div style="font-size:11px;opacity:.5;margin-bottom:8px;"><i class="fa-regular fa-clock"></i> Expires: ' + expStr + '</div><button class="abtn danger" style="margin-top:8px;" onclick="delOffer(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i> Delete</button></div>'; 
+      var imgHtml = o.image ? '<img src="' + o.image + '" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-bottom:8px;">' : '';
+      return '<div class="pkg-admin-item">' + imgHtml + '<h4>' + (o.title_en || o.title) + '</h4><p style="font-size:11px;opacity:0.7;margin:6px 0;">' + (o.description_en || o.description || '') + '</p><div style="margin:8px 0;"><span style="text-decoration:line-through;opacity:0.5;margin-right:8px;">$' + o.originalPrice + '</span><span style="color:#a855f7;font-weight:bold;">$' + o.salePrice + '</span></div><div style="font-size:11px;opacity:.5;margin-bottom:8px;"><i class="fa-regular fa-clock"></i> Expires: ' + expStr + '</div><button class="abtn danger" style="margin-top:8px;" onclick="delOffer(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i> Delete</button></div>'; 
     }).join('');
   } catch(e) { console.error('Offers:', e); }
 }
@@ -290,6 +291,7 @@ window.saveOffer = async function() {
   var op = document.getElementById('off-original-price');
   var sp = document.getElementById('off-sale-price');
   var ex = document.getElementById('off-expiration');
+  var img = document.getElementById('off-image');
   if(!tEn||!tEn.value||!tAr||!tAr.value||!op||!op.value||!sp||!sp.value||!ex||!ex.value) return Swal.fire({ icon: 'error', title: 'خطأ', text: 'Please fill all required fields.', confirmButtonColor: '#b5179e' }); 
   try { 
     await db.collection('offers').add({ 
@@ -299,12 +301,13 @@ window.saveOffer = async function() {
       description_en: dEn ? dEn.value : '',
       description_ar: dAr ? dAr.value : '',
       description: dEn ? dEn.value : '', // fallback
+      image: img ? img.value : '',
       originalPrice: parseFloat(op.value),
       salePrice: parseFloat(sp.value),
       expirationDate: ex.value,
       createdAt: firebase.firestore.FieldValue.serverTimestamp() 
     }); 
-    tEn.value=''; tAr.value=''; if(dEn) dEn.value=''; if(dAr) dAr.value=''; op.value=''; sp.value=''; ex.value=''; 
+    tEn.value=''; tAr.value=''; if(dEn) dEn.value=''; if(dAr) dAr.value=''; op.value=''; sp.value=''; ex.value=''; if(img) img.value=''; 
     loadOffersAdmin(); 
     Swal.fire({ icon: 'success', title: 'Success', text: 'Offer created.', confirmButtonColor: '#b5179e' });
   } catch(e) { Swal.fire({ icon: 'error', title: 'Error', text: e.message, confirmButtonColor: '#b5179e' }); } 

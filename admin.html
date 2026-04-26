@@ -186,7 +186,10 @@
 
       <!-- OFFERS -->
       <div id="p-offers" class="pane">
-        <h1 style="margin-bottom:24px;">Daily Offers Manager</h1>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+          <h1>Daily Offers Manager</h1>
+          <a href="offers.html" target="_blank" class="abtn" style="background:rgba(255,255,255,0.05);color:var(--accent);"><i class="fa-solid fa-eye"></i> View Public Offers</a>
+        </div>
         <div class="card">
           <h3 style="margin-bottom:16px;">Publish New Offer</h3>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -201,6 +204,7 @@
             <div class="fg"><label>Original Price</label><input type="number" id="off-original-price" placeholder="e.g. 1500"></div>
             <div class="fg"><label>Sale Price</label><input type="number" id="off-sale-price" placeholder="e.g. 999"></div>
           </div>
+          <div class="fg"><label>Offer Image URL</label><input type="text" id="off-image" placeholder="https://image-link.com/photo.jpg"></div>
           <div class="fg"><label>Expiration Date</label><input type="datetime-local" id="off-expiration"></div>
           <button class="abtn" onclick="saveOffer()"><i class="fa-solid fa-plus"></i> Publish Offer</button>
         </div>

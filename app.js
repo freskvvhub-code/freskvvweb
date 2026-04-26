@@ -545,16 +545,21 @@ function renderOffers() {
       var displayTitle = _currentLang === 'ar' ? (o.title_ar || o.title_en || o.title) : (o.title_en || o.title);
       var displayDesc = _currentLang === 'ar' ? (o.description_ar || o.description_en || o.description || '') : (o.description_en || o.description || '');
       var btnText = _currentLang === 'ar' ? 'أطلب العرض الآن' : 'Claim Offer Now';
+      var imgHtml = o.image ? '<img src="' + o.image + '" class="offer-img" alt="">' : '<div class="offer-img" style="background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;"><i class="fa-solid fa-gift" style="font-size:48px;opacity:0.2;"></i></div>';
       
       return '<div class="offer-card" id="offer-' + o.id + '">' +
-        '<h3 style="font-size:20px;font-weight:800;margin-bottom:8px;">' + displayTitle + '</h3>' +
-        '<p style="font-size:13px;opacity:0.7;margin-bottom:16px;">' + displayDesc + '</p>' +
-        '<div class="offer-price-container">' +
-          '<span class="offer-original-price">$' + o.originalPrice + '</span>' +
-          '<span class="offer-sale-price">$' + o.salePrice + '</span>' +
+        imgHtml +
+        '<div class="offer-badge">' + (_currentLang === 'ar' ? 'عرض محدود' : 'Limited Offer') + '</div>' +
+        '<div class="offer-body">' +
+          '<h3 style="font-size:20px;font-weight:800;margin-bottom:8px;">' + displayTitle + '</h3>' +
+          '<p style="font-size:13px;opacity:0.7;margin-bottom:16px;">' + displayDesc + '</p>' +
+          '<div class="offer-price-row">' +
+            '<span class="old-price">$' + o.originalPrice + '</span>' +
+            '<span class="new-price">$' + o.salePrice + '</span>' +
+          '</div>' +
+          '<div class="offer-timer" id="timer-' + o.id + '">--:--:--:--</div>' +
+          '<button class="btn-apple btn-primary" style="width:100%; justify-content:center;" onclick="window.selectPackage(\'' + displayTitle.replace(/'/g,"\\'") + ' (Offer)\', ' + o.salePrice + ', \'offer\')"><i class="fa-solid fa-bolt"></i> ' + btnText + '</button>' +
         '</div>' +
-        '<div class="offer-timer" id="timer-' + o.id + '">--:--:--:--</div>' +
-        '<button class="offer-claim-btn" onclick="window.selectPackage(\'' + displayTitle.replace(/'/g,"\\'") + ' (Offer)\', ' + o.salePrice + ', \'offer\')"><i class="fa-solid fa-bolt"></i> ' + btnText + '</button>' +
       '</div>';
     }).join('');
     
@@ -637,7 +642,7 @@ function initSystemMonitor() {
     if (s.siteTitle) document.title = s.siteTitle;
     var adBanner = document.getElementById('home-ads-banner');
     var adImg = document.getElementById('home-ads-img');
-    if (s.homeBanner) {
+    if (s.homeBanner && s.homeBanner.trim().startsWith('http')) {
       if (adImg) adImg.src = s.homeBanner;
       if (adBanner) { adBanner.href = s.homeBannerLink || '#'; adBanner.style.display = 'block'; }
     } else { if (adBanner) adBanner.style.display = 'none'; }
