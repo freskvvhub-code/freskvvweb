@@ -48,6 +48,7 @@ function autoIcon(name) {
 function initAdmin() {
   try { loadStats(); } catch(e) {}
   try { loadSysSettings(); } catch(e) {}
+  initAdminNotifications();
   try { listenUnread(); } catch(e) {}
   try { loadAdminCategories(); } catch(e) {}
   var logout = document.getElementById('admin-logout-btn');
@@ -63,7 +64,61 @@ function initAdmin() {
     db.collection('chats').doc(window._aActiveUid).collection('messages').add({ text: t, sender: 'admin', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
     inp.value = '';
   });
+
+  // Enable Sound Prompt
+  var soundEnabled = localStorage.getItem('sound_enabled');
+  if (!soundEnabled) {
+    Swal.fire({
+      title: 'Enable Admin Sounds?',
+      text: 'To hear a chime when new orders arrive, please enable sounds.',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Enable',
+      confirmButtonColor: '#b5179e'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        localStorage.setItem('sound_enabled', '1');
+        // Play a silent sound to unlock audio context
+        var a = new Audio('https://assets.mixkit.co/active_storage/sfx/2012/2012-preview.mp3');
+        a.volume = 0;
+        a.play().catch(e => {});
+      }
+    });
+  }
 }
+
+function initAdminNotifications() {
+  var audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2012/2012-preview.mp3'); // Cash register sound
+  var isInitial = true;
+  db.collection('orders').orderBy('createdAt', 'desc').onSnapshot(function (snap) {
+    if (isInitial) { isInitial = false; return; }
+    snap.docChanges().forEach(function (change) {
+      if (change.type === 'added') {
+        if (localStorage.getItem('sound_enabled')) {
+          audio.play().catch(function(e) { console.warn('Autoplay blocked'); });
+        }
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'success',
+          title: 'طلب جديد! 💰',
+          text: 'العميل ينتظر ردك الآن.',
+          showConfirmButton: false,
+          timer: 5000,
+          timerProgressBar: true
+        });
+        var badge = document.getElementById('orders-badge');
+        if (badge) {
+          badge.classList.remove('hidden');
+          badge.classList.add('badge-pulse');
+          var count = parseInt(badge.textContent) || 0;
+          badge.textContent = count + 1;
+        }
+      }
+    });
+  });
+}
+
 
 /* ═══════ STATS ═══════ */
 async function loadStats() {

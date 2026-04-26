@@ -117,7 +117,7 @@
         <button class="s-btn" onclick="sw('discounts',this)"><i class="fa-solid fa-ticket"></i> Discounts</button>
         <button class="s-btn" onclick="sw('offers',this)"><i class="fa-solid fa-fire"></i> Offers</button>
         <button class="s-btn" onclick="sw('proj',this)"><i class="fa-solid fa-briefcase"></i> Projects</button>
-        <button class="s-btn" onclick="sw('orders',this)"><i class="fa-solid fa-box-open"></i> Orders</button>
+        <button class="s-btn" onclick="sw('orders',this); var b=document.getElementById('orders-badge'); if(b){b.classList.add('hidden'); b.textContent='0';}"><i class="fa-solid fa-box-open"></i> Orders <span id="orders-badge" class="badge">0</span></button>
         <button class="s-btn" onclick="sw('chat',this)"><i class="fa-solid fa-headset"></i> Support <span id="unread-badge" class="badge">0</span></button>
         <button class="s-btn" onclick="sw('sys',this)"><i class="fa-solid fa-gears"></i> System</button>
       </nav>

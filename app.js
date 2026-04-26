@@ -358,6 +358,7 @@ firebase.auth().onAuthStateChanged(async function (user) {
         c.appendChild(ab);
       }
     }
+    initUserNotifications(user.uid);
     loadUserOrders(user.uid);
   } else {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-user-astronaut"></i>';
@@ -862,4 +863,61 @@ function initProfileEdit() {
       btn.innerHTML = '<i class="fa-solid fa-save"></i> ' + (_currentLang === 'ar' ? 'حفظ التعديلات' : 'Save Changes');
     }
   });
+}
+/* ═══════ NOTIFICATIONS ═══════ */
+function initUserNotifications(uid) {
+  var isInitialOrders = true;
+  var isInitialMsgs = true;
+
+  // 1. Listen for Order Status Changes
+  db.collection('orders').where('uid', '==', uid).onSnapshot(function(snap) {
+    if (isInitialOrders) { isInitialOrders = false; return; }
+    snap.docChanges().forEach(function(change) {
+      if (change.type === 'modified') {
+        var order = change.doc.data();
+        Swal.fire({
+          toast: true, position: 'top-end', icon: 'info',
+          title: _currentLang === 'ar' ? 'تحديث في طلبك' : 'Order Update',
+          text: (_currentLang === 'ar' ? 'طلبك الآن: ' : 'Order is now: ') + order.status,
+          showConfirmButton: false, timer: 5000
+        });
+        triggerSupportAlert(true); // Pulse support button on order update too
+      }
+    });
+  });
+
+  // 2. Listen for Admin Messages
+  db.collection('chats').doc(uid).collection('messages').orderBy('timestamp', 'desc').limit(1).onSnapshot(function(snap) {
+    if (isInitialMsgs) { isInitialMsgs = false; return; }
+    if (snap.empty) return;
+    var msg = snap.docs[0].data();
+    var msgId = snap.docs[0].id;
+    if (msg.sender === 'admin' && !localStorage.getItem('seen_' + msgId)) {
+      triggerSupportAlert(false);
+      localStorage.setItem('seen_' + msgId, '1');
+    }
+  });
+
+  // 3. Mark as Read on Support Click
+  var sBtn = document.getElementById('support-btn');
+  if (sBtn) sBtn.addEventListener('click', function() {
+    sBtn.classList.remove('shake-anim', 'bounce-anim');
+    var badge = document.getElementById('support-badge');
+    if (badge) badge.remove();
+  });
+}
+
+function triggerSupportAlert(isOrder) {
+  var sBtn = document.getElementById('support-btn');
+  if (!sBtn) return;
+  sBtn.classList.add(isOrder ? 'bounce-anim' : 'shake-anim');
+  
+  // Add badge if not exists
+  if (!document.getElementById('support-badge')) {
+    var b = document.createElement('div');
+    b.id = 'support-badge';
+    b.className = 'nav-badge badge-pulse';
+    b.textContent = '1';
+    sBtn.appendChild(b);
+  }
 }
