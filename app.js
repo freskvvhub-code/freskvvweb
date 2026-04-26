@@ -9,7 +9,7 @@ window.addEventListener('load', function () {
 });
 
 /* ─── GLOBALS ─── */
-var FH = { admins: ['admin@freskvvhub.com', 'fares@freskvv.com'] };
+var FH = { admins: ['freskvvtec@gmail.com'] }; // UPDATE YOUR ADMIN EMAIL HERE
 var _signUpMode = false;
 var _chatUnsub = null;
 var _currentLang = 'en';
@@ -198,12 +198,20 @@ function initAuthUI() {
       try {
         await firebase.auth().currentUser.reload();
         if (firebase.auth().currentUser.emailVerified) {
-          document.getElementById('verify-shield-modal').classList.add('hidden');
-          Swal.fire({ icon: 'success', title: 'تم التفعيل', text: 'تم توثيق بريدك الإلكتروني بنجاح.', confirmButtonColor: '#b5179e' });
-          location.reload();
+          Swal.fire({
+            icon: 'success',
+            title: _currentLang === 'ar' ? 'تم التفعيل!' : 'Verified!',
+            text: _currentLang === 'ar' ? 'جاري تحديث البيانات...' : 'Updating your account...',
+            confirmButtonColor: '#b5179e',
+            timer: 2000,
+            target: 'body',
+            didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '9999999'; }
+          }).then(() => {
+            location.reload();
+          });
         } else {
           vCheck.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Check Again';
-          Swal.fire({ icon: 'info', title: 'غير مفعل', text: 'لسه مفعلتش حسابك، شيك على الإيميل', confirmButtonColor: '#b5179e' });
+          Swal.fire({ icon: 'info', title: 'تنبيه', text: _currentLang === 'ar' ? 'لسه مفعلتش حسابك، شيك على الإيميل' : 'Email not verified yet. Please check your inbox.', confirmButtonColor: '#b5179e', target: 'body', didOpen: () => { document.querySelector('.swal2-container').style.zIndex = '9999999'; } });
         }
       } catch (ex) {
         vCheck.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Check Again';
@@ -306,6 +314,10 @@ firebase.auth().onAuthStateChanged(async function (user) {
       return; // Stop rendering the logged-in state
     } else {
       var vShield = document.getElementById('verify-shield-modal');
+      if (vShield && !vShield.classList.contains('hidden')) {
+        vShield.classList.add('hidden');
+        location.reload(); // Auto-reload to update permissions
+      }
       if (vShield) vShield.classList.add('hidden');
     }
 

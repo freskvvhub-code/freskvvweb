@@ -300,7 +300,7 @@
     firebase.auth().onAuthStateChanged(function(u) {
       if (_authDone) return;
       _authDone = true;
-      var ok = ['admin@freskvvhub.com','fares@freskvv.com'];
+      var ok = ['freskvvtec@gmail.com']; // UPDATE YOUR ADMIN EMAIL HERE
       if (!u || ok.indexOf(u.email) === -1) { window.location.href = 'index.html'; return; }
       if (typeof initAdmin === 'function') initAdmin();
     });
