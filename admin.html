@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Control — Freskvv Hub</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23b5179e'/%3E%3Cstop offset='100%25' stop-color='%237b2ff7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpolygon points='50,8 90,30 90,70 50,92 10,70 10,30' fill='url(%23g)' opacity='0.9'/%3E%3Ctext x='50' y='60' text-anchor='middle' fill='white' font-size='36' font-weight='900' font-family='sans-serif'%3EF%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root { --accent: #b5179e; --accent-rgb: 181,23,158; }
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Inter',sans-serif;background:#05060f;color:#f8fafc;overflow-x:hidden;}
+    .admin-wrap{display:flex;min-height:100vh;}
+    /* SIDEBAR */
+    .sidebar{width:260px;background:rgba(15,23,42,.7);backdrop-filter:blur(20px);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;padding:28px 16px;position:fixed;top:0;left:0;height:100vh;z-index:100;}
+    .sidebar-brand{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:1px;color:var(--accent);margin-bottom:36px;font-size:15px;}
+    .sidebar-nav{flex:1;display:flex;flex-direction:column;gap:6px;}
+    .s-btn{padding:13px 16px;border-radius:10px;display:flex;align-items:center;gap:12px;color:#94a3b8;font-weight:600;font-size:13px;transition:.3s;width:100%;text-align:left;position:relative;}
+    .s-btn:hover{background:rgba(255,255,255,.04);color:#fff;}
+    .s-btn.active{background:rgba(var(--accent-rgb),.1);color:var(--accent);}
+    .s-btn .badge{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:#f43f5e;color:#fff;font-size:9px;padding:2px 7px;border-radius:10px;display:none;}
+    .s-btn .badge.show{display:block;}
+    .s-logout{color:#f43f5e;margin-top:auto;}
+    .s-logout:hover{background:rgba(244,63,94,.08);}
+    /* MAIN */
+    .admin-main{flex:1;margin-left:260px;padding:36px;overflow-y:auto;min-height:100vh;}
+    .pane{display:none;animation:fadeIn .3s ease;}
+    .pane.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+    .card{background:rgba(15,23,42,.7);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:18px;padding:28px;margin-bottom:20px;}
+    .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:28px;}
+    .stat-card{text-align:center;}
+    .stat-card span{font-size:12px;color:#94a3b8;display:block;margin-bottom:6px;}
+    .stat-card h2{font-size:32px;font-weight:900;}
+    /* FORMS */
+    .fg{margin-bottom:16px;}
+    .fg label{display:block;font-size:11px;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+    .fg input,.fg textarea,.fg select{width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:11px 14px;color:#fff;font-size:13px;outline:none;font-family:inherit;}
+    .fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--accent);}
+    .fg select { background:#1a1a2e; color:#fff; cursor:pointer; }
+    .fg option { background:#1a1a2e; color:#fff; }
+    .fg textarea{resize:vertical;min-height:60px;}
+    .abtn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:100px;font-size:13px;font-weight:700;background:var(--accent);color:#000;transition:.3s;cursor:pointer;border:none;}
+    .abtn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(var(--accent-rgb),.3);}
+    .abtn.danger{background:rgba(244,63,94,.1);color:#f43f5e;}
+    .abtn.danger:hover{background:rgba(244,63,94,.2);}
+    /* TABLE */
+    .otable{width:100%;border-collapse:collapse;font-size:13px;}
+    .otable th{text-align:left;padding:12px;color:#94a3b8;font-size:10px;text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(255,255,255,.06);}
+    .otable td{padding:12px;border-bottom:1px solid rgba(255,255,255,.03);}
+    .otable select{background:#1e293b;border:1px solid rgba(255,255,255,.15);color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:12px;}
+    .otable select option{background:#1e293b;color:#fff;}
+    .fg select{appearance:auto;}
+    .fg select option{background:#1e293b;color:#fff;padding:8px;}
+    /* CHAT WHATSAPP */
+    .wa-layout{display:flex;height:70vh;border-radius:18px;overflow:hidden;}
+    .wa-sidebar{width:280px;border-right:1px solid rgba(255,255,255,.05);display:flex;flex-direction:column;background:rgba(0,0,0,.1);}
+    .wa-sidebar-head{padding:20px;border-bottom:1px solid rgba(255,255,255,.05);font-weight:700;}
+    .wa-users{flex:1;overflow-y:auto;padding:8px;}
+    .wa-user{padding:12px;border-radius:10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:.2s;margin-bottom:4px;}
+    .wa-user:hover{background:rgba(255,255,255,.04);}
+    .wa-user.active{background:rgba(var(--accent-rgb),.1);}
+    .wa-avatar{width:38px;height:38px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#000;font-weight:800;font-size:14px;flex-shrink:0;}
+    .wa-meta{flex:1;overflow:hidden;}
+    .wa-meta strong{font-size:13px;display:block;}
+    .wa-meta span{font-size:11px;color:#64748b;}
+    .wa-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+    .wa-main{flex:1;display:flex;flex-direction:column;}
+    .wa-header{padding:18px 24px;border-bottom:1px solid rgba(255,255,255,.05);font-weight:700;font-size:14px;}
+    .wa-messages{flex:1;padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+    .wa-msg{max-width:70%;padding:10px 16px;border-radius:16px;font-size:13px;line-height:1.5;}
+    .wa-msg.me{align-self:flex-end;background:var(--accent);color:#000;border-bottom-right-radius:4px;}
+    .wa-msg.them{align-self:flex-start;background:rgba(255,255,255,.08);border-bottom-left-radius:4px;}
+    .wa-msg .time{font-size:9px;opacity:.5;margin-top:3px;text-align:right;}
+    .wa-form{padding:16px 24px;border-top:1px solid rgba(255,255,255,.05);display:flex;gap:10px;}
+    .wa-form input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);padding:12px 16px;border-radius:12px;color:#fff;font-size:13px;outline:none;}
+    .wa-form input:focus{border-color:var(--accent);}
+    .wa-form button{padding:12px 20px;border-radius:10px;background:var(--accent);color:#000;font-weight:700;border:none;cursor:pointer;}
+    /* TOGGLE */
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:16px;background:rgba(255,255,255,.02);border-radius:12px;border:1px solid rgba(255,255,255,.04);}
+    .switch{position:relative;display:inline-block;width:44px;height:24px;}
+    .switch input{opacity:0;width:0;height:0;}
+    .slider{position:absolute;cursor:pointer;inset:0;background:#334155;transition:.4s;border-radius:34px;}
+    .slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.4s;border-radius:50%;}
+    input:checked+.slider{background:var(--accent);}
+    input:checked+.slider:before{transform:translateX(20px);}
+    /* PKG GRID */
+    .pkg-admin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:16px;}
+    .pkg-admin-item{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);border-radius:12px;padding:16px;font-size:12px;}
+    .pkg-admin-item h4{font-size:14px;margin-bottom:4px;}
+    .pkg-admin-item .price{color:var(--accent);font-weight:800;margin-bottom:8px;}
+    /* MOBILE */
+    .mobile-menu-btn{display:none;position:fixed;top:16px;left:16px;z-index:200;width:44px;height:44px;border-radius:12px;background:rgba(15,23,42,.9);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:18px;align-items:center;justify-content:center;}
+    @media(max-width:768px){
+      .sidebar{transform:translateX(-100%);transition:.3s;}
+      .sidebar.open{transform:translateX(0);}
+      .admin-main{margin-left:0;padding:20px;padding-top:70px;}
+      .mobile-menu-btn{display:flex;}
+      .wa-layout{flex-direction:column;height:auto;}
+      .wa-sidebar{width:100%;max-height:200px;}
+      .wa-messages{min-height:250px;}
+      .stats-grid{grid-template-columns:1fr 1fr;}
+    }
+  </style>
+</head>
+<body>
+  <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('open')"><i class="fa-solid fa-bars"></i></button>
+
+  <div class="admin-wrap">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><i class="fa-solid fa-shield-halved" style="font-size:20px"></i> MASTER CONTROL</div>
+      <nav class="sidebar-nav">
+        <button class="s-btn active" onclick="sw('dash',this)"><i class="fa-solid fa-chart-line"></i> Dashboard</button>
+        <button class="s-btn" onclick="sw('users',this)"><i class="fa-solid fa-users"></i> Users</button>
+        <button class="s-btn" onclick="sw('hierarchy',this)"><i class="fa-solid fa-sitemap"></i> Hierarchy</button>
+        <button class="s-btn" onclick="sw('discounts',this)"><i class="fa-solid fa-ticket"></i> Discounts</button>
+        <button class="s-btn" onclick="sw('offers',this)"><i class="fa-solid fa-fire"></i> Offers</button>
+        <button class="s-btn" onclick="sw('proj',this)"><i class="fa-solid fa-briefcase"></i> Projects</button>
+        <button class="s-btn" onclick="sw('orders',this)"><i class="fa-solid fa-box-open"></i> Orders</button>
+        <button class="s-btn" onclick="sw('chat',this)"><i class="fa-solid fa-headset"></i> Support <span id="unread-badge" class="badge">0</span></button>
+        <button class="s-btn" onclick="sw('sys',this)"><i class="fa-solid fa-gears"></i> System</button>
+      </nav>
+      <button id="admin-logout-btn" class="s-btn s-logout"><i class="fa-solid fa-power-off"></i> Exit</button>
+    </aside>
+
+    <main class="admin-main">
+      <!-- DASHBOARD -->
+      <div id="p-dash" class="pane active">
+        <h1 style="margin-bottom:24px;">Dashboard</h1>
+        <div class="stats-grid">
+          <div class="card stat-card"><span>Users</span><h2 id="stat-users">0</h2></div>
+          <div class="card stat-card"><span>Orders</span><h2 id="stat-orders">0</h2></div>
+          <div class="card stat-card"><span>Packages</span><h2 id="stat-packages">0</h2></div>
+          <div class="card stat-card"><span>Status</span><h2 style="color:#22c55e;font-size:18px;">ONLINE</h2></div>
+        </div>
+      </div>
+
+      <!-- HIERARCHY MANAGER -->
+      <div id="p-hierarchy" class="pane">
+        <h1 style="margin-bottom:24px;">Hierarchy Manager</h1>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          
+          <!-- Categories -->
+          <div class="card" style="flex:1; min-width:300px;">
+            <h3 style="margin-bottom:16px;">Categories</h3>
+            <div class="fg"><input type="text" id="cat-name" placeholder="Category Name"></div>
+            <div class="fg"><textarea id="cat-desc" placeholder="Description" style="min-height:40px;"></textarea></div>
+            <button class="abtn" onclick="saveCategory()" style="width:100%; justify-content:center; margin-bottom:16px;"><i class="fa-solid fa-plus"></i> Add Category</button>
+            <div id="cat-admin-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+
+          <!-- Services -->
+          <div class="card" style="flex:1; min-width:300px;">
+            <h3 style="margin-bottom:16px;">Services</h3>
+            <div class="fg"><select id="srv-cat-select"><option value="">Select Category First</option></select></div>
+            <div class="fg"><input type="text" id="srv-name" placeholder="Service Name"></div>
+            <div class="fg"><input type="text" id="srv-icon" placeholder="Icon Class (e.g. fa-solid fa-code)"></div>
+            <button class="abtn" onclick="saveService()" style="width:100%; justify-content:center; margin-bottom:16px;"><i class="fa-solid fa-plus"></i> Add Service</button>
+            <div id="srv-admin-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+
+          <!-- Packages -->
+          <div class="card" style="flex:1; min-width:300px;">
+            <h3 style="margin-bottom:16px;">Packages</h3>
+            <div class="fg"><select id="pkg-srv-select"><option value="">Select Service First</option></select></div>
+            <div class="fg"><input type="text" id="pkg-name" placeholder="Package Name"></div>
+            <div class="fg"><input type="number" id="pkg-price" placeholder="Price ($)"></div>
+            <div class="fg"><textarea id="pkg-features" placeholder="Features (one per line)"></textarea></div>
+            <button class="abtn" onclick="saveAdminPackage()" style="width:100%; justify-content:center; margin-bottom:16px;"><i class="fa-solid fa-plus"></i> Add Package</button>
+            <div id="pkg-admin-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- USERS -->
+      <div id="p-users" class="pane">
+        <h1 style="margin-bottom:24px;">User Management</h1>
+        <div class="card">
+          <table class="otable"><thead><tr><th>User Info</th><th>Phone</th><th>Join Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- OFFERS -->
+      <div id="p-offers" class="pane">
+        <h1 style="margin-bottom:24px;">Daily Offers Manager</h1>
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Publish New Offer</h3>
+          <div class="fg"><label>Title</label><input type="text" id="off-title" placeholder="Offer Title"></div>
+          <div class="fg"><label>Image URL</label><input type="text" id="off-img" placeholder="https://..."></div>
+          <div class="fg"><label>Price / Deal</label><input type="text" id="off-price" placeholder="e.g. $19.99"></div>
+          <div class="fg"><label>Timer Ends (hours from now)</label><input type="number" id="off-timer" placeholder="24"></div>
+          <button class="abtn" onclick="saveOffer()"><i class="fa-solid fa-plus"></i> Publish Offer</button>
+        </div>
+        <div id="offers-admin-list" class="pkg-admin-grid"></div>
+      </div>
+
+      <!-- DISCOUNT MANAGEMENT -->
+      <div id="p-discounts" class="pane">
+        <h1 style="margin-bottom:24px;">Discount Management</h1>
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Generate Promo Codes</h3>
+          <div class="fg"><label>Service (Optional)</label><select id="promo-srv-select"><option value="">All Services</option></select></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+            <div class="fg"><label>Quantity</label><input type="number" id="promo-qty" value="1" min="1" max="100"></div>
+            <div class="fg"><label>Type</label><select id="promo-type"><option value="flat">Flat (EGP)</option><option value="percent">Percentage (%)</option></select></div>
+            <div class="fg"><label>Value</label><input type="number" id="promo-value" placeholder="e.g. 50"></div>
+          </div>
+          <button class="abtn" onclick="generatePromoCodes()" style="width:100%;justify-content:center;"><i class="fa-solid fa-wand-magic-sparkles"></i> Generate Codes</button>
+        </div>
+        <div class="card" style="overflow-x:auto;">
+          <h3 style="margin-bottom:12px;">Active Codes</h3>
+          <div id="promo-codes-list"></div>
+        </div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div id="p-proj" class="pane">
+        <h1 style="margin-bottom:24px;">Projects</h1>
+        <div class="card">
+          <div class="fg"><label>Title</label><input type="text" id="proj-title"></div>
+          <div class="fg"><label>Image URL</label><input type="text" id="proj-img"></div>
+          <button class="abtn" onclick="saveProject()"><i class="fa-solid fa-plus"></i> Publish</button>
+        </div>
+        <div id="proj-admin-list" class="pkg-admin-grid"></div>
+      </div>
+
+      <!-- ORDERS -->
+      <div id="p-orders" class="pane">
+        <h1 style="margin-bottom:24px;">Order Tracking</h1>
+        <div class="card">
+          <table class="otable"><thead><tr><th>Order Details</th><th>Payment Info</th><th>Promo</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="orders-tbody"></tbody></table>
+        </div>
+      </div>
+
+      <!-- CHAT -->
+      <div id="p-chat" class="pane">
+        <h1 style="margin-bottom:24px;">Support Room</h1>
+        <div class="card wa-layout" style="padding:0;">
+          <div class="wa-sidebar">
+            <div class="wa-sidebar-head">Conversations</div>
+            <div class="wa-users" id="chat-users"></div>
+          </div>
+          <div class="wa-main">
+            <div class="wa-header" id="wa-chat-header">Select a conversation</div>
+            <div class="wa-messages" id="wa-chat-msgs">
+              <div style="text-align:center;margin-top:80px;opacity:.2;"><i class="fa-solid fa-comments" style="font-size:48px;"></i><p style="margin-top:12px;">No conversation selected</p></div>
+            </div>
+            <form class="wa-form" id="wa-chat-form">
+              <input type="text" id="wa-chat-input" placeholder="Type a message..." autocomplete="off">
+              <button type="submit"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- SYSTEM -->
+      <div id="p-sys" class="pane">
+        <h1 style="margin-bottom:24px;">System Settings</h1>
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Maintenance Mode</h3>
+          <div class="toggle-row">
+            <div><strong>Global Lockout</strong><p style="font-size:11px;color:#94a3b8;margin-top:4px;">Redirect all users to maintenance screen.</p></div>
+            <label class="switch"><input type="checkbox" id="maint-toggle" onchange="toggleMaint()"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:16px;">Ads Banner Control & Branding</h3>
+          <div class="fg"><label>Top Announcement Text</label><input type="text" id="sys-announce"></div>
+          <div class="fg"><label>Home Page Banner Image URL</label><input type="text" id="sys-banner"></div>
+          <div class="fg"><label>Banner Link</label><input type="text" id="sys-banner-link"></div>
+          <div class="fg"><label>Site Title</label><input type="text" id="sys-title"></div>
+          <button class="abtn" onclick="saveSysSettings()"><i class="fa-solid fa-save"></i> Save</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="firebase-config.js"></script>
+  <script src="admin.js"></script>
+  <script>
+    var _authDone = false;
+    firebase.auth().onAuthStateChanged(function(u) {
+      if (_authDone) return;
+      _authDone = true;
+      var ok = ['admin@freskvvhub.com','fares@freskvv.com'];
+      if (!u || ok.indexOf(u.email) === -1) { window.location.href = 'index.html'; return; }
+      if (typeof initAdmin === 'function') initAdmin();
+    });
+    function sw(id, el) {
+      document.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active');});
+      document.querySelectorAll('.s-btn').forEach(function(b){b.classList.remove('active');});
+      var t = document.getElementById('p-'+id);
+      if(t) t.classList.add('active');
+      if(el) el.classList.add('active');
+      if(id==='chat') loadChatUsers();
+      if(id==='orders') loadOrders();
+      if(id==='users') loadUsersAdmin();
+      if(id==='offers') loadOffersAdmin();
+      if(id==='discounts') { loadPromoServices(); loadPromoCodes(); }
+      if(id==='hierarchy') { loadAdminCategories(); }
+      if(id==='proj') loadProjectsAdmin();
+      if(id==='sys') loadSysSettings();
+      document.querySelector('.sidebar').classList.remove('open');
+    }
+  </script>
+</body>
+</html>

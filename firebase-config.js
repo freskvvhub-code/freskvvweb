@@ -24,11 +24,30 @@ const auth = firebase.auth();
 const db = firebase.firestore();
 
 // ─── Admin email whitelist ───
-const ADMIN_EMAILS = ['admin@freskvvhub.com']; // Add your admin emails here
+const ADMIN_EMAILS = ['admin@freskvvhub.com', 'fares@freskvv.com'];
+
+// ─── Rank Constants ───
+const RANKS = {
+  BRONZE: 'Bronze',
+  SILVER: 'Silver',
+  GOLD: 'Gold',
+  PLATINUM: 'Platinum'
+};
 
 // ─── Helper: Check if current user is admin ───
 function isAdmin(user) {
   return user && ADMIN_EMAILS.includes(user.email);
+}
+
+// ─── Helper: Get User Rank Style ───
+function getRankStyle(rank) {
+  const styles = {
+    'Bronze': { color: '#cd7f32', icon: '🥉' },
+    'Silver': { color: '#c0c0c0', icon: '🥈' },
+    'Gold': { color: '#ffd700', icon: '🥇' },
+    'Platinum': { color: '#e5e4e2', icon: '💎' }
+  };
+  return styles[rank] || styles['Bronze'];
 }
 
 // ─── Helper: Safe Firestore read ───

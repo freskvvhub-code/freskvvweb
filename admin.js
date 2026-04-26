@@ -1,601 +1,334 @@
 /* ═══════════════════════════════════════════════════
-   FRESKVV HUB — Admin Dashboard Engine
+   FRESKVV HUB — Admin Module v11 (Promo Codes)
    ═══════════════════════════════════════════════════ */
 
-let currentUser = null;
-let isAdminUser = false;
-let unsubChat = null;
-let unsubInbox = null;
+window._aChatUnsub = null;
+window._aActiveUid = null;
+var _ADMIN_OK = ['admin@freskvvhub.com', 'fares@freskvv.com'];
 
-/* ═══════ 1. AUTH SYSTEM ═══════ */
-function initAuth() {
-  const loginBtn = document.getElementById('auth-login-btn');
-  const logoutBtn = document.getElementById('auth-logout-btn');
-  const authModal = document.getElementById('auth-modal');
-  const authClose = document.getElementById('auth-close-btn');
-  const authForm = document.getElementById('auth-form');
-  const authToggle = document.getElementById('auth-toggle');
-  const authTitle = document.getElementById('auth-title');
-  const authSubmitText = document.getElementById('auth-submit-text');
-  const authError = document.getElementById('auth-error');
-  let isSignUp = false;
-
-  if (loginBtn) loginBtn.addEventListener('click', () => authModal.classList.remove('hidden'));
-  if (authClose) authClose.addEventListener('click', () => authModal.classList.add('hidden'));
-  if (authModal) authModal.addEventListener('click', e => { if (e.target === authModal) authModal.classList.add('hidden'); });
-
-  if (authToggle) authToggle.addEventListener('click', () => {
-    isSignUp = !isSignUp;
-    authTitle.textContent = isSignUp ? 'Create Account' : 'Sign In';
-    authSubmitText.textContent = isSignUp ? 'Sign Up' : 'Sign In';
-    authToggle.textContent = isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up";
-    authError.textContent = '';
-  });
-
-  if (authForm) authForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    authError.textContent = '';
-    const btn = authForm.querySelector('button[type="submit"]');
-    btn.classList.add('btn-loading');
-    const email = document.getElementById('auth-email').value;
-    const pass = document.getElementById('auth-password').value;
-    try {
-      if (isSignUp) {
-        const userCred = await auth.createUserWithEmailAndPassword(email, pass);
-        await db.collection('users').doc(userCred.user.uid).set({ email, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      } else {
-        await auth.signInWithEmailAndPassword(email, pass);
-      }
-      authModal.classList.add('hidden');
-      authForm.reset();
-    } catch (err) {
-      const msgs = { 'auth/email-already-in-use':'Email already registered', 'auth/wrong-password':'Wrong password',
-        'auth/user-not-found':'No account found', 'auth/weak-password':'Password too weak (min 6 chars)',
-        'auth/invalid-email':'Invalid email format' };
-      authError.textContent = msgs[err.code] || err.message;
-    } finally {
-      btn.classList.remove('btn-loading');
-    }
-  });
-
-  // Auth state listener
-  auth.onAuthStateChanged(user => {
-    currentUser = user;
-    isAdminUser = isAdmin(user);
-    if (loginBtn) loginBtn.style.display = user ? 'none' : 'flex';
-    if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
-    const adminBtn = document.getElementById('admin-dash-btn');
-    if (adminBtn) adminBtn.style.display = isAdminUser ? 'flex' : 'none';
-    if (isAdminUser) loadAdminData();
-    checkMaintenance();
-  });
-
-  if (logoutBtn) logoutBtn.addEventListener('click', () => {
-    try { auth.signOut(); } catch(e) { console.error(e); }
-  });
+/* ─── Admin Guard ─── */
+function adminGuard() {
+  var u = firebase.auth().currentUser;
+  if (!u || _ADMIN_OK.indexOf(u.email) === -1) { alert('Permission denied.'); return false; }
+  return true;
 }
 
-/* ═══════ 2. MAINTENANCE MODE ═══════ */
-async function checkMaintenance() {
-  try {
-    const doc = await safeGet(db.collection('settings').doc('maintenance'));
-    const maint = doc && doc.exists ? doc.data() : { enabled: false };
-    const overlay = document.getElementById('maintenance-overlay');
-    if (maint.enabled && !isAdminUser) {
-      overlay.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
-    } else {
-      overlay.classList.add('hidden');
-      document.body.style.overflow = '';
+/* ─── Auto-Icon Map ─── */
+function autoIcon(name) {
+  var n = (name || '').toLowerCase();
+  var map = [
+    [['ai','artificial','machine','bot','robot'], 'fa-solid fa-robot'],
+    [['web','website','html','frontend'], 'fa-solid fa-code'],
+    [['design','graphic','ui','ux','paint','art'], 'fa-solid fa-pen-nib'],
+    [['social','marketing','seo','media'], 'fa-solid fa-share-nodes'],
+    [['internet','network','wifi','cloud'], 'fa-solid fa-globe'],
+    [['mobile','app','phone','android','ios'], 'fa-solid fa-mobile-screen-button'],
+    [['video','film','motion','animation'], 'fa-solid fa-video'],
+    [['photo','camera','image'], 'fa-solid fa-camera'],
+    [['music','audio','sound'], 'fa-solid fa-music'],
+    [['seo','search','marketing'], 'fa-solid fa-chart-line'],
+    [['security','cyber','hack','protect'], 'fa-solid fa-shield-halved'],
+    [['data','database','analytics'], 'fa-solid fa-database'],
+    [['game','gaming','play'], 'fa-solid fa-gamepad'],
+    [['social','media','facebook','instagram','tiktok'], 'fa-solid fa-share-nodes'],
+    [['server','hosting','devops'], 'fa-solid fa-server'],
+    [['writing','content','blog','copy'], 'fa-solid fa-pen-nib'],
+    [['shop','store','ecommerce','cart'], 'fa-solid fa-cart-shopping'],
+    [['education','course','learn','training'], 'fa-solid fa-graduation-cap'],
+    [['3d','render','model'], 'fa-solid fa-cube']
+  ];
+  for (var i = 0; i < map.length; i++) {
+    for (var j = 0; j < map[i][0].length; j++) {
+      if (n.indexOf(map[i][0][j]) !== -1) return map[i][1];
     }
-  } catch(e) { console.error('Maintenance check failed:', e); }
-}
-
-// ─── ADMIN BACKDOOR IN MAINTENANCE ───
-let maintClicks = 0;
-document.addEventListener('DOMContentLoaded', () => {
-  const maintIcon = document.querySelector('.maintenance-icon');
-  if (maintIcon) {
-    maintIcon.addEventListener('click', () => {
-      maintClicks++;
-      if (maintClicks >= 3) {
-        document.getElementById('auth-modal').classList.remove('hidden');
-        document.getElementById('auth-modal').style.zIndex = '5000'; // Ensure it's above maintenance
-        maintClicks = 0;
-      }
-    });
   }
-});
-
-async function toggleMaintenance(enabled) {
-  await safeSet(db.collection('settings').doc('maintenance'), { enabled });
-  updateMaintenanceUI(enabled);
+  return 'fa-solid fa-cubes';
 }
 
-function updateMaintenanceUI(enabled) {
-  const dot = document.getElementById('maint-status-dot');
-  const text = document.getElementById('maint-status-text');
-  if (dot) dot.className = 'status-dot ' + (enabled ? 'active' : '');
-  if (text) text.textContent = enabled ? 'ON' : 'OFF';
+function initAdmin() {
+  try { loadStats(); } catch(e) {}
+  try { loadSysSettings(); } catch(e) {}
+  try { listenUnread(); } catch(e) {}
+  try { loadAdminCategories(); } catch(e) {}
+  var logout = document.getElementById('admin-logout-btn');
+  if (logout) logout.addEventListener('click', function() {
+    firebase.auth().signOut().then(function() { localStorage.clear(); window.location.href = 'index.html'; });
+  });
+  var chatForm = document.getElementById('wa-chat-form');
+  if (chatForm) chatForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!window._aActiveUid) return;
+    var inp = document.getElementById('wa-chat-input'); if (!inp) return;
+    var t = inp.value.trim(); if (!t) return;
+    db.collection('chats').doc(window._aActiveUid).collection('messages').add({ text: t, sender: 'admin', timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+    inp.value = '';
+  });
 }
 
-/* ═══════ 3. POPUP AD MANAGER ═══════ */
-async function loadAdData() {
+/* ═══════ STATS ═══════ */
+async function loadStats() {
   try {
-    const doc = await safeGet(db.collection('settings').doc('popup_ad'));
-    if (doc && doc.exists) {
-      const d = doc.data();
-      document.getElementById('ad-image-url').value = d.imageUrl || '';
-      document.getElementById('ad-text').value = d.text || '';
-      document.getElementById('ad-link').value = d.link || '';
-      document.getElementById('ad-toggle').checked = d.enabled || false;
+    var u = await db.collection('users').get();
+    var o = await db.collection('orders').get();
+    var p = await db.collection('packages').get();
+    var el = function(id) { return document.getElementById(id); };
+    if (el('stat-users')) el('stat-users').textContent = u.size;
+    if (el('stat-orders')) el('stat-orders').textContent = o.size;
+    if (el('stat-packages')) el('stat-packages').textContent = p.size;
+  } catch(e) { console.error('Stats:', e); }
+}
+
+/* ═══════ UNREAD ═══════ */
+function listenUnread() {
+  db.collection('chats').onSnapshot(function(snap) {
+    var badge = document.getElementById('unread-badge');
+    if (badge) { badge.textContent = snap.size; badge.classList.toggle('show', snap.size > 0); }
+  });
+}
+
+/* ═══════ HIERARCHY CRUD ═══════ */
+var _catUnsub = null;
+function loadAdminCategories() {
+  var list = document.getElementById('cat-admin-list');
+  var sel = document.getElementById('srv-cat-select');
+  if (!list) return;
+  // Use onSnapshot for real-time updates so dropdown always stays current
+  if (_catUnsub) _catUnsub();
+  _catUnsub = db.collection('categories').onSnapshot(function(snap) {
+    if (snap.empty) {
+      list.innerHTML = '<p style="opacity:.4;font-size:12px;">No categories yet. Add one above.</p>';
+      if(sel) sel.innerHTML = '<option value="">Create a category first</option>';
+      return;
     }
-  } catch(e) { console.error(e); }
+    var opts = '<option value="">Select Category...</option>';
+    list.innerHTML = snap.docs.map(function(doc) {
+      var c = doc.data();
+      opts += '<option value="' + doc.id + '">' + c.name + '</option>';
+      return '<div class="pkg-admin-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px;"><div><i class="' + autoIcon(c.name) + '" style="color:var(--accent);margin-right:8px;"></i><strong>' + c.name + '</strong></div><button class="abtn danger" style="padding:6px 12px;font-size:10px;" onclick="delCategory(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i></button></div>';
+    }).join('');
+    if(sel) {
+      var prev = sel.value;
+      sel.innerHTML = opts;
+      sel.onchange = function() { loadAdminServices(this.value); };
+      // Restore previous selection if still valid
+      if (prev) { sel.value = prev; }
+    }
+  }, function(e) { console.error('Categories listener:', e); });
 }
 
-async function saveAdData() {
-  const data = {
-    imageUrl: document.getElementById('ad-image-url').value,
-    text: document.getElementById('ad-text').value,
-    link: document.getElementById('ad-link').value,
-    enabled: document.getElementById('ad-toggle').checked,
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  const ok = await safeSet(db.collection('settings').doc('popup_ad'), data);
-  showAdminToast(ok ? 'Ad saved!' : 'Save failed');
-}
+window.saveCategory = async function() {
+  if (!adminGuard()) return;
+  var name = document.getElementById('cat-name'); var desc = document.getElementById('cat-desc');
+  if (!name || !name.value) return alert('Name required');
+  try { var id = name.value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    await db.collection('categories').doc(id).set({ name: name.value, description: desc ? desc.value : '' });
+    name.value = ''; if(desc) desc.value = '';
+    // No need to call loadAdminCategories — onSnapshot handles it automatically
+  } catch(e) { alert(e.message); }
+};
+window.delCategory = async function(id) { if (!adminGuard()) return; if(!confirm('Delete category?')) return; try { await db.collection('categories').doc(id).delete(); } catch(e) { alert(e.message); } };
 
-async function showPopupAd() {
-  if (isAdminUser) return;
+async function loadAdminServices(catId) {
+  var list = document.getElementById('srv-admin-list'); var sel = document.getElementById('pkg-srv-select');
+  if (!list) return;
+  if (!catId) { list.innerHTML = ''; if(sel) sel.innerHTML = '<option value="">Select Service First</option>'; return; }
   try {
-    const doc = await safeGet(db.collection('settings').doc('popup_ad'));
-    if (doc && doc.exists && doc.data().enabled) {
-      const d = doc.data();
-      const el = document.getElementById('popup-ad');
-      document.getElementById('popup-ad-img').src = d.imageUrl || '';
-      document.getElementById('popup-ad-img').style.display = d.imageUrl ? 'block' : 'none';
-      document.getElementById('popup-ad-text').textContent = d.text || '';
-      document.getElementById('popup-ad-link').href = d.link || '#';
-      document.getElementById('popup-ad-link').style.display = d.link ? 'inline-flex' : 'none';
-      el.classList.remove('hidden');
-    }
-  } catch(e) { console.error(e); }
+    var snap = await db.collection('services').where('categoryID', '==', catId).get();
+    if (snap.empty) { list.innerHTML = '<p style="opacity:.4;font-size:12px;">No services.</p>'; if(sel) sel.innerHTML = '<option value="">Create a service first</option>'; return; }
+    var opts = '<option value="">Select Service...</option>';
+    list.innerHTML = snap.docs.map(function(doc) {
+      var s = doc.data(); opts += '<option value="' + doc.id + '">' + s.name + '</option>';
+      return '<div class="pkg-admin-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px;"><div><strong><i class="' + s.icon + '"></i> ' + s.name + '</strong></div><button class="abtn danger" style="padding:6px 12px;font-size:10px;" onclick="delService(\'' + doc.id + '\',\'' + catId + '\')"><i class="fa-solid fa-trash"></i></button></div>';
+    }).join('');
+    if(sel) { sel.innerHTML = opts; sel.onchange = function() { loadAdminPackages(this.value); }; }
+  } catch(e) { console.error('Services:', e); }
+}
+window.saveService = async function() { if (!adminGuard()) return; var catId = document.getElementById('srv-cat-select').value; var name = document.getElementById('srv-name'); var icon = document.getElementById('srv-icon'); if (!catId || !name.value) return alert('Category and Name required'); var iconVal = (icon && icon.value.trim()) ? icon.value.trim() : autoIcon(name.value); try { await db.collection('services').add({ categoryID: catId, name: name.value, icon: iconVal }); name.value = ''; if(icon) icon.value = ''; loadAdminServices(catId); } catch(e) { alert(e.message); } };
+window.delService = async function(id, catId) { if (!adminGuard()) return; if(!confirm('Delete service?')) return; try { await db.collection('services').doc(id).delete(); loadAdminServices(catId); } catch(e) { alert(e.message); } };
+
+async function loadAdminPackages(serId) {
+  var list = document.getElementById('pkg-admin-list');
+  if (!list) return; if (!serId) { list.innerHTML = ''; return; }
+  try {
+    var snap = await db.collection('packages').where('serviceID', '==', serId).get();
+    if (snap.empty) { list.innerHTML = '<p style="opacity:.4;font-size:12px;">No packages.</p>'; return; }
+    list.innerHTML = snap.docs.map(function(doc) { var p = doc.data();
+      return '<div class="pkg-admin-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px;"><div><strong>' + p.name + '</strong> <span style="color:var(--accent);margin-left:8px;">$' + p.price + '</span></div><button class="abtn danger" style="padding:6px 12px;font-size:10px;" onclick="delAdminPackage(\'' + doc.id + '\',\'' + serId + '\')"><i class="fa-solid fa-trash"></i></button></div>';
+    }).join('');
+  } catch(e) { console.error('Packages:', e); }
+}
+window.saveAdminPackage = async function() { if (!adminGuard()) return; var serId = document.getElementById('pkg-srv-select').value; var name = document.getElementById('pkg-name'); var price = document.getElementById('pkg-price'); var feats = document.getElementById('pkg-features'); if (!serId || !name.value || !price.value) return alert('Service, Name, Price required'); try { var fl = feats && feats.value ? feats.value.split('\n').filter(function(f){return f.trim();}) : []; await db.collection('packages').add({ serviceID: serId, name: name.value, price: parseFloat(price.value) || 0, features: fl }); name.value=''; price.value=''; if(feats) feats.value=''; loadAdminPackages(serId); } catch(e) { alert(e.message); } };
+window.delAdminPackage = async function(id, serId) { if (!adminGuard()) return; if(!confirm('Delete package?')) return; try { await db.collection('packages').doc(id).delete(); loadAdminPackages(serId); } catch(e) { alert(e.message); } };
+
+/* ═══════ PROJECTS CRUD ═══════ */
+async function loadProjectsAdmin() {
+  var grid = document.getElementById('proj-admin-list'); if (!grid) return;
+  try { var snap = await db.collection('projects').orderBy('createdAt','desc').get();
+    if (snap.empty) { grid.innerHTML = '<p style="opacity:.4">No projects.</p>'; return; }
+    grid.innerHTML = snap.docs.map(function(doc) { var p = doc.data(); return '<div class="pkg-admin-item"><img src="' + p.image + '" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-bottom:8px;"><h4>' + p.title + '</h4><button class="abtn danger" style="margin-top:8px;" onclick="delProj(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i> Delete</button></div>'; }).join('');
+  } catch(e) { console.error('Projects:', e); }
+}
+window.saveProject = async function() { var t = document.getElementById('proj-title'); var i = document.getElementById('proj-img'); if (!t||!t.value||!i||!i.value) return alert('Fill all fields'); try { await db.collection('projects').add({ title: t.value, image: i.value, createdAt: firebase.firestore.FieldValue.serverTimestamp() }); t.value=''; i.value=''; loadProjectsAdmin(); } catch(e) { alert(e.message); } };
+window.delProj = async function(id) { if(!confirm('Delete?')) return; try { await db.collection('projects').doc(id).delete(); loadProjectsAdmin(); } catch(e) { alert(e.message); } };
+
+/* ═══════ USER MANAGEMENT ═══════ */
+async function loadUsersAdmin() {
+  var tbody = document.getElementById('users-tbody'); if (!tbody) return;
+  try {
+    var snap = await db.collection('users').orderBy('createdAt','desc').get();
+    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="5" style="opacity:.3;padding:16px;">No users.</td></tr>'; return; }
+    tbody.innerHTML = snap.docs.map(function(doc) {
+      var u = doc.data(); var date = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString() : 'Unknown'; var blocked = u.blocked || false;
+      var phoneStr = (u.phone || 'N/A') + (u.phoneVerified ? ' <i class="fa-solid fa-check-circle" style="color:#22c55e;font-size:12px;" title="Verified"></i>' : '');
+      return '<tr><td><strong>' + (u.email||'N/A') + '</strong><div style="font-size:10px;opacity:.4;margin-top:4px;">UID: ' + doc.id + '</div></td><td>' + phoneStr + '</td><td>' + date + '</td><td><span style="background:' + (blocked?'#f43f5e':'#22c55e') + '20;color:' + (blocked?'#f43f5e':'#22c55e') + ';padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;">' + (blocked?'BLOCKED':'ACTIVE') + '</span></td><td><button class="abtn" style="padding:6px 10px;font-size:10px;margin-right:5px;background:' + (blocked?'#22c55e':'#f43f5e') + '20;color:' + (blocked?'#22c55e':'#f43f5e') + ';" onclick="toggleUserBlock(\'' + doc.id + '\',' + blocked + ')">' + (blocked?'Unblock':'Block') + '</button><button class="abtn danger" style="padding:6px 10px;font-size:10px;" onclick="delUserAdmin(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i></button></td></tr>';
+    }).join('');
+  } catch(e) { console.error('Users:', e); }
+}
+window.toggleUserBlock = async function(id, cur) { if (!adminGuard()) return; if(!confirm(cur?'Unblock this user?':'Block this user?')) return; try { await db.collection('users').doc(id).update({ blocked: !cur }); loadUsersAdmin(); } catch(e) { alert(e.message); } };
+window.delUserAdmin = async function(id) {
+  if (!adminGuard()) return;
+  if(!confirm('WARNING: This wipes user profile + chat history. Proceed?')) return;
+  try { await db.collection('users').doc(id).delete();
+    var chatSnap = await db.collection('chats').doc(id).collection('messages').get();
+    var batch = db.batch(); chatSnap.docs.forEach(function(d){ batch.delete(d.ref); }); await batch.commit();
+    await db.collection('chats').doc(id).delete(); loadUsersAdmin();
+  } catch(e) { alert(e.message); }
+};
+
+/* ═══════ OFFERS MANAGER ═══════ */
+async function loadOffersAdmin() {
+  var grid = document.getElementById('offers-admin-list'); if (!grid) return;
+  try { var snap = await db.collection('offers').orderBy('createdAt','desc').get();
+    if (snap.empty) { grid.innerHTML = '<p style="opacity:.4">No offers.</p>'; return; }
+    grid.innerHTML = snap.docs.map(function(doc) { var o = doc.data(); return '<div class="pkg-admin-item"><img src="' + o.image + '" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-bottom:8px;"><h4>' + o.title + '</h4><div class="price" style="color:#f59e0b;">' + o.price + '</div><div style="font-size:11px;opacity:.5;margin-bottom:8px;">Expires: ' + o.timerHours + 'h</div><button class="abtn danger" style="margin-top:8px;" onclick="delOffer(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i> Delete</button></div>'; }).join('');
+  } catch(e) { console.error('Offers:', e); }
+}
+window.saveOffer = async function() { var t=document.getElementById('off-title'),i=document.getElementById('off-img'),p=document.getElementById('off-price'),tm=document.getElementById('off-timer'); if(!t||!t.value||!i||!i.value||!p||!p.value) return alert('Fill required fields'); try { await db.collection('offers').add({ title:t.value,image:i.value,price:p.value,timerHours:tm?parseInt(tm.value)||24:24,createdAt:firebase.firestore.FieldValue.serverTimestamp() }); t.value='';i.value='';p.value='';if(tm)tm.value=''; loadOffersAdmin(); } catch(e) { alert(e.message); } };
+window.delOffer = async function(id) { if(!confirm('Delete offer?')) return; try { await db.collection('offers').doc(id).delete(); loadOffersAdmin(); } catch(e) { alert(e.message); } };
+
+/* ═══════ PROMO CODE GENERATION ═══════ */
+async function loadPromoServices() {
+  var sel = document.getElementById('promo-srv-select'); if(!sel) return;
+  try {
+    var snap = await db.collection('services').get();
+    sel.innerHTML = '<option value="">Select Service...</option>';
+    snap.docs.forEach(function(doc) { var s = doc.data(); sel.innerHTML += '<option value="' + doc.id + '">' + s.name + '</option>'; });
+  } catch(e) { console.error('Promo services:', e); }
 }
 
-/* ═══════ 4. ORDERS MANAGER ═══════ */
-let unsubOrders = null;
+async function loadPromoCodes() {
+  var list = document.getElementById('promo-codes-list'); if(!list) return;
+  try {
+    var snap = await db.collection('promoCodes').orderBy('createdAt','desc').limit(50).get();
+    if(snap.empty) { list.innerHTML = '<p style="opacity:.4">No promo codes.</p>'; return; }
+    list.innerHTML = '<table class="otable" style="margin-top:16px;"><thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Status</th><th>Action</th></tr></thead><tbody>' +
+      snap.docs.map(function(doc) {
+        var p = doc.data();
+        var statusColor = p.used ? '#f43f5e' : '#22c55e';
+        return '<tr><td style="font-family:monospace;font-weight:800;letter-spacing:1px;">' + p.code + '</td><td>' + (p.discountType === 'percent' ? '%' : 'EGP') + '</td><td>' + p.discountValue + '</td><td><span style="background:' + statusColor + '20;color:' + statusColor + ';padding:3px 10px;border-radius:20px;font-size:10px;font-weight:800;">' + (p.used ? 'USED' : 'ACTIVE') + '</span></td><td><button class="abtn danger" style="padding:4px 10px;font-size:10px;" onclick="delPromoCode(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i></button></td></tr>';
+      }).join('') + '</tbody></table>';
+  } catch(e) { console.error('Promo codes:', e); }
+}
+
+function generateRandomCode(len) {
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  var result = '';
+  for(var i = 0; i < (len || 8); i++) result += chars.charAt(Math.floor(Math.random() * chars.length));
+  return result;
+}
+
+window.generatePromoCodes = async function() {
+  var serId = document.getElementById('promo-srv-select').value;
+  var qty = parseInt(document.getElementById('promo-qty').value) || 1;
+  var type = document.getElementById('promo-type').value;
+  var value = parseFloat(document.getElementById('promo-value').value);
+  if(!value || value <= 0) return alert('Enter a valid discount value.');
+  if(qty < 1 || qty > 100) return alert('Quantity must be 1-100.');
+  try {
+    var batch = db.batch();
+    for(var i = 0; i < qty; i++) {
+      var ref = db.collection('promoCodes').doc();
+      batch.set(ref, {
+        code: generateRandomCode(8),
+        serviceID: serId || null,
+        discountType: type,
+        discountValue: value,
+        used: false,
+        usedBy: null,
+        usedAt: null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    await batch.commit();
+    alert(qty + ' promo code(s) generated!');
+    loadPromoCodes();
+  } catch(e) { alert('Error: ' + e.message); }
+};
+
+window.delPromoCode = async function(id) {
+  if(!confirm('Delete this promo code?')) return;
+  try { await db.collection('promoCodes').doc(id).delete(); loadPromoCodes(); } catch(e) { alert(e.message); }
+};
+
+/* ═══════ ORDERS ═══════ */
 function loadOrders() {
-  if (unsubOrders) unsubOrders();
+  var tbody = document.getElementById('orders-tbody'); if (!tbody) return;
+  db.collection('orders').orderBy('createdAt','desc').onSnapshot(function(snap) {
+    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="5" style="opacity:.3;padding:16px;">No orders.</td></tr>'; return; }
+    tbody.innerHTML = snap.docs.map(function(doc) {
+      var o = doc.data(); var st = o.status||'Pending'; var c = '#f59e0b';
+      if(st==='In Progress') c='#3b82f6'; if(st==='Completed') c='#22c55e'; if(st==='Cancelled') c='#f43f5e';
+      return '<tr><td><strong>' + (o.serviceName||'N/A') + '</strong><div style="font-size:10px;opacity:.4;margin-top:4px;">' + (o.userEmail||'Guest') + '</div></td><td><div style="color:var(--accent);font-weight:700;">' + (o.senderNumber||'N/A') + '</div><div style="font-size:11px;opacity:.8;">' + (o.senderName||'N/A') + '</div></td><td>' + (o.promoCode ? '<span style="font-family:monospace;color:#f59e0b;">' + o.promoCode + '</span>' : '-') + '</td><td><span style="background:' + c + '20;color:' + c + ';padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;border:1px solid ' + c + '40;">' + st + '</span></td><td><select onchange="updOrder(\'' + doc.id + '\',this.value)"><option value="Pending"' + (st==='Pending'?' selected':'') + '>Pending</option><option value="In Progress"' + (st==='In Progress'?' selected':'') + '>In Progress</option><option value="Completed"' + (st==='Completed'?' selected':'') + '>Completed</option><option value="Cancelled"' + (st==='Cancelled'?' selected':'') + '>Cancelled</option></select></td></tr>';
+    }).join('');
+  });
+}
+window.updOrder = async function(id,st) { try { await db.collection('orders').doc(id).update({ status: st }); } catch(e) { alert(e.message); } };
+
+/* ═══════ CHAT ═══════ */
+async function loadChatUsers() {
+  var list = document.getElementById('chat-users'); if (!list) return;
   try {
-    unsubOrders = db.collection('orders').orderBy('createdAt', 'desc').limit(50)
-      .onSnapshot(snap => {
-        const tbody = document.getElementById('orders-table-body');
-        if (!tbody) return;
-        tbody.innerHTML = '';
-        if (snap.empty) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;">No orders found.</td></tr>'; return; }
-        
-        snap.forEach(doc => {
-          const d = doc.data();
-          const date = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString() : 'N/A';
-          tbody.innerHTML += `
-            <tr>
-              <td><strong>${d.name || 'Guest'}</strong><br><small>${d.email || ''}</small></td>
-              <td>${d.service || 'N/A'}</td>
-              <td>${d.phone || 'N/A'}</td>
-              <td>${date}</td>
-              <td>
-                <select class="status-select" onchange="updateOrderStatus('${doc.id}', this.value)">
-                  <option value="pending" ${d.status === 'pending' ? 'selected' : ''}>Pending</option>
-                  <option value="completed" ${d.status === 'completed' ? 'selected' : ''}>Completed</option>
-                  <option value="cancelled" ${d.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-                </select>
-                <span class="status-badge ${d.status || 'pending'}">${d.status || 'pending'}</span>
-              </td>
-            </tr>`;
-        });
-      });
-  } catch(e) { console.error('Orders load error:', e); }
+    var snap = await db.collection('chats').get(); var rooms = [];
+    for (var i=0;i<snap.docs.length;i++) { var d=snap.docs[i]; var u=await db.collection('users').doc(d.id).get(); rooms.push({ uid:d.id, name: u.exists?(u.data().fullName||'Guest'):'Guest', email: u.exists?(u.data().email||''):''}); }
+    if(!rooms.length) { list.innerHTML='<p style="padding:20px;opacity:.4;text-align:center;">No conversations.</p>'; return; }
+    list.innerHTML = rooms.map(function(r) { var ac=window._aActiveUid===r.uid; return '<div class="wa-user'+(ac?' active':'')+'" style="position:relative;">'+'<div style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openChat(\''+r.uid+'\',\''+r.name.replace(/'/g,"\\'")+'\')">'+
+      '<div class="wa-avatar">'+r.name.charAt(0).toUpperCase()+'</div>'+'<div class="wa-meta"><strong>'+r.name+'</strong><span>'+r.email+'</span></div>'+(ac?'':'<div class="wa-dot"></div>')+'</div>'+
+      '<button onclick="event.stopPropagation();deleteChat(\''+r.uid+'\');" style="background:rgba(244,63,94,0.1);color:#f43f5e;border:none;border-radius:8px;padding:4px 8px;font-size:10px;cursor:pointer;margin-left:6px;" title="Delete Chat"><i class="fa-solid fa-trash"></i></button></div>'; }).join('');
+  } catch(e) { console.error('Chat users:',e); }
 }
 
-async function updateOrderStatus(id, status) {
+window.deleteChat = async function(uid) {
+  if (!adminGuard()) return;
+  if (!confirm('Delete entire chat history with this user?')) return;
   try {
-    await db.collection('orders').doc(id).update({ status });
-    showAdminToast(`Order ${status}`);
-  } catch(e) { showAdminToast('Update failed'); }
+    var msgSnap = await db.collection('chats').doc(uid).collection('messages').get();
+    var batch = db.batch();
+    msgSnap.docs.forEach(function(d) { batch.delete(d.ref); });
+    await batch.commit();
+    await db.collection('chats').doc(uid).delete();
+    window._aActiveUid = null;
+    document.getElementById('wa-chat-msgs').innerHTML = '<div style="text-align:center;margin-top:80px;opacity:.2;"><i class="fa-solid fa-comments" style="font-size:48px;"></i><p style="margin-top:12px;">No conversation selected</p></div>';
+    document.getElementById('wa-chat-header').textContent = 'Select a conversation';
+    loadChatUsers();
+  } catch(e) { alert(e.message); }
+};
+
+window.openChat = function(uid,name) {
+  window._aActiveUid=uid; var header=document.getElementById('wa-chat-header'); if(header) header.textContent=name;
+  if(window._aChatUnsub) window._aChatUnsub(); var box=document.getElementById('wa-chat-msgs'); if(!box) return;
+  window._aChatUnsub = db.collection('chats').doc(uid).collection('messages').orderBy('timestamp','asc').onSnapshot(function(snap) {
+    box.innerHTML = snap.docs.map(function(d) { var m=d.data(); var me=m.sender==='admin'; var time=m.timestamp?new Date(m.timestamp.toDate()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):''; return '<div class="wa-msg '+(me?'me':'them')+'">'+m.text+'<div class="time">'+time+'</div></div>'; }).join('');
+    box.scrollTop=box.scrollHeight;
+  });
+  loadChatUsers();
+};
+
+/* ═══════ SYSTEM ═══════ */
+async function loadSysSettings() {
+  try { var doc=await db.collection('settings').doc('core').get();
+    if(doc.exists) { var s=doc.data(); var mt=document.getElementById('maint-toggle'),an=document.getElementById('sys-announce'),ti=document.getElementById('sys-title'),ba=document.getElementById('sys-banner'),bl=document.getElementById('sys-banner-link');
+      if(mt) mt.checked=s.maintenanceMode||false; if(an) an.value=s.announcement||''; if(ti) ti.value=s.siteTitle||''; if(ba) ba.value=s.homeBanner||''; if(bl) bl.value=s.homeBannerLink||''; }
+  } catch(e) { console.error('Sys:',e); }
 }
-
-function saveOrderToFirestore(data) {
-  try {
-    return db.collection('orders').add({
-      ...data,
-      status: 'pending',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  } catch(e) { console.error('Order save error:', e); return Promise.resolve(); }
-}
-
-/* ═══════ 5. STATS & ANALYTICS ═══════ */
-function loadStats() {
-  // Real-time Users
-  db.collection('users').onSnapshot(snap => {
-    document.getElementById('stat-users').textContent = snap.size;
-  });
-  // Real-time Orders
-  db.collection('orders').onSnapshot(snap => {
-    document.getElementById('stat-orders').textContent = snap.size;
-  });
-  // Support Tickets (Unread inquiries or chats)
-  db.collection('chat').where('isAdmin', '==', false).onSnapshot(snap => {
-    document.getElementById('stat-tickets').textContent = snap.size;
-  });
-}
-
-/* ═══════ 6. LIVE CHAT ═══════ */
-function loadLiveChat() {
-  if (unsubChat) unsubChat();
-  try {
-    unsubChat = db.collection('chat').orderBy('createdAt', 'asc').limit(100)
-      .onSnapshot(snap => {
-        const container = document.getElementById('admin-chat-messages');
-        const userContainer = document.getElementById('user-chat-messages');
-        if (!container && !userContainer) return;
-        
-        const myUid = currentUser ? currentUser.uid : 'anon';
-        const myName = sessionStorage.getItem('guestName') || '';
-        
-        let html = '';
-        snap.forEach(doc => {
-          const d = doc.data();
-          let isMe = false;
-          
-          if (isAdminUser) {
-            isMe = d.isAdmin === true;
-          } else {
-            // Check if it's the user's own message
-            isMe = (d.isAdmin === false) && (d.uid === myUid || (d.name === myName && d.uid === 'anon'));
-          }
-          
-          html += `
-            <div class="chat-msg ${isMe ? 'mine' : 'other'}">
-              <span class="chat-msg-name">${d.name || 'Guest'}</span>
-              <p>${d.text}</p>
-            </div>`;
-        });
-        
-        if (container) container.innerHTML = html;
-        if (userContainer) userContainer.innerHTML = html;
-        if (container) container.scrollTop = container.scrollHeight;
-        if (userContainer) userContainer.scrollTop = userContainer.scrollHeight;
-      }, err => console.error('Chat listen error:', err));
-  } catch(e) { console.error(e); }
-}
-
-async function sendChatMessage(text) {
-  if (!text.trim()) return;
-  try {
-    const name = isAdminUser ? '🛡️ Admin' : (currentUser ? (currentUser.displayName || currentUser.email.split('@')[0]) : (sessionStorage.getItem('guestName') || 'Guest'));
-    await db.collection('chat').add({
-      text: text.trim(),
-      uid: currentUser ? currentUser.uid : 'anon',
-      name: name,
-      isAdmin: isAdminUser,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-  } catch(e) { console.error('Chat send error:', e); }
-}
-
-/* ═══════ 7. ADMIN DASHBOARD UI ═══════ */
-function initAdminDashboard() {
-  const dashBtn = document.getElementById('admin-dash-btn');
-  const dashPanel = document.getElementById('admin-dashboard');
-  const dashClose = document.getElementById('admin-close-btn');
-
-  if (dashBtn) dashBtn.addEventListener('click', () => {
-    dashPanel.classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-  });
-  if (dashClose) dashClose.addEventListener('click', () => {
-    dashPanel.classList.add('hidden');
-    document.body.style.overflow = '';
-  });
-
-  // Tab switching
-  document.querySelectorAll('.admin-tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.admin-tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.admin-tab-content').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
-    });
-  });
-
-  // Maintenance Toggle
-  const maintBtn = document.getElementById('maint-toggle-btn');
-  if (maintBtn) maintBtn.addEventListener('click', async () => {
-    const doc = await safeGet(db.collection('settings').doc('maintenance'));
-    const isCurrentlyOn = doc && doc.exists ? doc.data().enabled : false;
-    await toggleMaintenance(!isCurrentlyOn);
-  });
-
-  // Asset Library Save
-  const assetSave = document.getElementById('asset-save-btn');
-  if (assetSave) assetSave.addEventListener('click', async () => {
-    assetSave.classList.add('btn-loading');
-    const data = {
-      logoUrl: document.getElementById('asset-logo-url').value,
-      heroUrl: document.getElementById('asset-hero-url').value,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    await safeSet(db.collection('settings').doc('asset_library'), data);
-    showAdminToast('Asset library updated!');
-    assetSave.classList.remove('btn-loading');
-    // Refresh UI
-    if (typeof loadContentOverrides === 'function') await loadContentOverrides();
-  });
-
-  // Marketing Hub Save (Popup + Announcement)
-  const mktSave = document.getElementById('mkt-save-btn');
-  if (mktSave) mktSave.addEventListener('click', async () => {
-    mktSave.classList.add('btn-loading');
-    const adData = {
-      imageUrl: document.getElementById('mkt-ad-image').value,
-      text: document.getElementById('mkt-ad-text').value,
-      link: document.getElementById('mkt-ad-link').value,
-      enabled: document.getElementById('mkt-ad-toggle').checked,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    const newsData = {
-      text: document.getElementById('mkt-news-text').value,
-      enabled: document.getElementById('mkt-news-toggle').checked
-    };
-    await safeSet(db.collection('settings').doc('popup_ad'), adData);
-    await safeSet(db.collection('settings').doc('announcement'), newsData);
-    showAdminToast('Marketing settings saved!');
-    mktSave.classList.remove('btn-loading');
-    if (typeof loadContentOverrides === 'function') await loadContentOverrides();
-  });
-
-  // System Settings Save (Social Links)
-  const sysSave = document.getElementById('sys-save-btn');
-  if (sysSave) sysSave.addEventListener('click', async () => {
-    sysSave.classList.add('btn-loading');
-    const links = {
-      whatsapp: document.getElementById('sys-wa-link').value,
-      instagram: document.getElementById('sys-ig-link').value,
-      telegram: document.getElementById('sys-tg-link').value
-    };
-    await safeSet(db.collection('settings').doc('social_links'), links);
-    showAdminToast('Global links updated!');
-    sysSave.classList.remove('btn-loading');
-    if (typeof loadContentOverrides === 'function') await loadContentOverrides();
-  });
-
-  // Content Editor Logic
-  const serviceSelect = document.getElementById('editor-service-select');
-  const editorSave = document.getElementById('editor-save-btn');
-  
-  if (serviceSelect && editorSave) {
-    serviceSelect.addEventListener('change', async () => {
-      const id = serviceSelect.value;
-      const snap = await safeGet(db.collection('settings').doc('content_overrides'));
-      let data = {};
-      if (snap && snap.exists) data = snap.data();
-      
-      const svc_en = SERVICES_DATA.en.find(s=>s.id===id);
-      const svc_ar = SERVICES_DATA.ar.find(s=>s.id===id);
-      
-      document.getElementById('editor-price-en').value = data[`${id}_price_en`] || '';
-      document.getElementById('editor-price-ar').value = data[`${id}_price_ar`] || '';
-      document.getElementById('editor-icon').value = data[`${id}_icon`] || svc_en?.icon || '';
-      document.getElementById('editor-desc-en').value = data[`${id}_desc_en`] || svc_en?.desc || '';
-      document.getElementById('editor-desc-ar').value = data[`${id}_desc_ar`] || svc_ar?.desc || '';
-    });
-    
-    // Initial load
-    serviceSelect.dispatchEvent(new Event('change'));
-
-    editorSave.addEventListener('click', async () => {
-      editorSave.classList.add('btn-loading');
-      const id = serviceSelect.value;
-      const data = {
-        [`${id}_price_en`]: document.getElementById('editor-price-en').value,
-        [`${id}_price_ar`]: document.getElementById('editor-price-ar').value,
-        [`${id}_icon`]: document.getElementById('editor-icon').value,
-        [`${id}_desc_en`]: document.getElementById('editor-desc-en').value,
-        [`${id}_desc_ar`]: document.getElementById('editor-desc-ar').value
-      };
-      
-      await db.collection('settings').doc('content_overrides').set(data, { merge: true });
-      if (typeof loadContentOverrides === 'function') {
-        await loadContentOverrides();
-        if (typeof renderServices === 'function') renderServices();
-      }
-      showAdminToast('Asset library updated!');
-      editorSave.classList.remove('btn-loading');
-    });
-  }
-
-  // Orders Refresh
-  document.getElementById('refresh-orders-btn')?.addEventListener('click', loadOrders);
-
-  // Chat send
-  const chatForm = document.getElementById('admin-chat-form');
-  if (chatForm) chatForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const input = document.getElementById('admin-chat-input');
-    await sendChatMessage(input.value);
-    input.value = '';
-  });
-
-  // Popup ad close
-  const popupClose = document.getElementById('popup-ad-close');
-  if (popupClose) popupClose.addEventListener('click', () => document.getElementById('popup-ad').classList.add('hidden'));
-
-  // Support btn → Choice Modal
-  const supportBtn = document.getElementById('support-btn');
-  const supportChoiceModal = document.getElementById('support-choice-modal');
-  const supportWaModal = document.getElementById('support-wa-modal');
-  const guestPromptModal = document.getElementById('guest-prompt-modal');
-  const guestPromptForm = document.getElementById('guest-prompt-form');
-  const guestPromptClose = document.getElementById('guest-prompt-close');
-
-  if (supportBtn) {
-    supportBtn.removeEventListener('click', supportBtn._handler);
-    supportBtn._handler = () => {
-      supportChoiceModal.classList.remove('hidden');
-    };
-    supportBtn.addEventListener('click', supportBtn._handler);
-  }
-
-  // Support Choice Actions
-  document.getElementById('support-choice-close')?.addEventListener('click', () => supportChoiceModal.classList.add('hidden'));
-  
-  document.getElementById('btn-support-wa')?.addEventListener('click', async () => {
-    supportChoiceModal.classList.add('hidden');
-    supportWaModal.classList.remove('hidden');
-    // Log click
-    try {
-      await db.collection('logs').add({
-        type: 'whatsapp_click',
-        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-        user: currentUser ? currentUser.email : 'Guest'
-      });
-    } catch(e) {}
-  });
-
-  document.getElementById('btn-support-chat')?.addEventListener('click', () => {
-    supportChoiceModal.classList.add('hidden');
-    if (!currentUser && !sessionStorage.getItem('guestName')) {
-      guestPromptModal.classList.remove('hidden');
-    } else {
-      document.getElementById('live-chat-panel').classList.remove('hidden');
-      loadLiveChat();
-    }
-  });
-
-  // WhatsApp Support Form
-  document.getElementById('support-wa-close')?.addEventListener('click', () => supportWaModal.classList.add('hidden'));
-  document.getElementById('support-wa-form')?.addEventListener('submit', async e => {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.classList.add('btn-loading');
-    const name = document.getElementById('wa-form-name').value;
-    const phone = document.getElementById('wa-form-phone').value;
-    const email = document.getElementById('wa-form-email').value;
-    const comments = document.getElementById('wa-form-comments').value.trim();
-
-    if (typeof saveInquiryToFirestore === 'function') {
-      await saveInquiryToFirestore({ name, phone, email, type: 'Support Request', service: 'WhatsApp Support', comments });
-    }
-
-    const text = `SUPPORT: Request\nName: ${name}\nPhone: ${phone}\nEmail: ${email}\nDetails: ${comments}`;
-    const waUrl = `https://wa.me/2001221640301?text=${encodeURIComponent(text)}`; // Hardcoded fallback just in case ASSETS isn't ready
-    window.open(typeof FRESKVV_ASSETS !== 'undefined' ? `${FRESKVV_ASSETS.socials.whatsapp}?text=${encodeURIComponent(text)}` : waUrl, '_blank');
-    supportWaModal.classList.add('hidden');
-    e.target.reset();
-    btn.classList.remove('btn-loading');
-  });
-
-  if (guestPromptClose) guestPromptClose.addEventListener('click', () => guestPromptModal.classList.add('hidden'));
-  
-  if (guestPromptForm) {
-    guestPromptForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('guest-name-input').value.trim();
-      if (name) {
-        sessionStorage.setItem('guestName', name);
-        guestPromptModal.classList.add('hidden');
-        document.getElementById('live-chat-panel').classList.remove('hidden');
-        loadLiveChat();
-      }
-    });
-  }
-
-  // User chat form
-  const userChatForm = document.getElementById('user-chat-form');
-  if (userChatForm) userChatForm.addEventListener('submit', async e => {
-    e.preventDefault();
-    const btn = userChatForm.querySelector('button[type="submit"]');
-    btn.classList.add('btn-loading');
-    const input = document.getElementById('user-chat-input');
-    await sendChatMessage(input.value);
-    input.value = '';
-    btn.classList.remove('btn-loading');
-  });
-  const chatClose = document.getElementById('chat-panel-close');
-  if (chatClose) chatClose.addEventListener('click', () => document.getElementById('live-chat-panel').classList.add('hidden'));
-}
-
-async function loadAdminData() {
-  loadOrders();
-  loadLiveChat();
-  loadStats();
-  loadWALogs();
-  
-  // Load all settings for dashboard population
-  try {
-    // Maintenance
-    const maintDoc = await safeGet(db.collection('settings').doc('maintenance'));
-    if (maintDoc && maintDoc.exists) updateMaintenanceUI(maintDoc.data().enabled);
-
-    // Assets
-    const assetDoc = await safeGet(db.collection('settings').doc('asset_library'));
-    if (assetDoc && assetDoc.exists) {
-      const d = assetDoc.data();
-      document.getElementById('asset-logo-url').value = d.logoUrl || '';
-      document.getElementById('asset-hero-url').value = d.heroUrl || '';
-    }
-
-    // Marketing (Popup)
-    const adDoc = await safeGet(db.collection('settings').doc('popup_ad'));
-    if (adDoc && adDoc.exists) {
-      const d = adDoc.data();
-      document.getElementById('mkt-ad-image').value = d.imageUrl || '';
-      document.getElementById('mkt-ad-text').value = d.text || '';
-      document.getElementById('mkt-ad-link').value = d.link || '';
-      document.getElementById('mkt-ad-toggle').checked = d.enabled || false;
-    }
-
-    // Marketing (Announcement)
-    const newsDoc = await safeGet(db.collection('settings').doc('announcement'));
-    if (newsDoc && newsDoc.exists) {
-      const d = newsDoc.data();
-      document.getElementById('mkt-news-text').value = d.text || '';
-      document.getElementById('mkt-news-toggle').checked = d.enabled || false;
-    }
-
-    // System (Social Links)
-    const linksDoc = await safeGet(db.collection('settings').doc('social_links'));
-    if (linksDoc && linksDoc.exists) {
-      const d = linksDoc.data();
-      document.getElementById('sys-wa-link').value = d.whatsapp || '';
-      document.getElementById('sys-ig-link').value = d.instagram || '';
-      document.getElementById('sys-tg-link').value = d.telegram || '';
-    }
-  } catch(e) { console.error('Error loading admin data:', e); }
-}
-
-async function loadWALogs() {
-  const container = document.getElementById('wa-clicks-log');
-  if (!container) return;
-  try {
-    const snap = await db.collection('logs').where('type', '==', 'whatsapp_click').orderBy('timestamp', 'desc').limit(10).get();
-    container.innerHTML = snap.docs.map(doc => {
-      const d = doc.data();
-      const date = d.timestamp ? d.timestamp.toDate().toLocaleString() : 'Just now';
-      return `<div style="margin-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
-        <strong>${d.user}</strong> clicked WhatsApp at ${date}
-      </div>`;
-    }).join('') || 'No clicks recorded yet.';
-  } catch(e) { console.error('Error loading logs:', e); }
-}
-
-function showAdminToast(msg) {
-  const t = document.getElementById('admin-toast');
-  if (!t) return;
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-
+window.toggleMaint = async function() { try { var v=document.getElementById('maint-toggle').checked; await db.collection('settings').doc('core').set({ maintenanceMode: v },{ merge:true }); } catch(e) { alert(e.message); } };
+window.saveSysSettings = async function() { try { var an=document.getElementById('sys-announce'),ti=document.getElementById('sys-title'),ba=document.getElementById('sys-banner'),bl=document.getElementById('sys-banner-link'); await db.collection('settings').doc('core').set({ announcement:an?an.value:'',siteTitle:ti?ti.value:'',homeBanner:ba?ba.value:'',homeBannerLink:bl?bl.value:'' },{ merge:true }); alert('Saved!'); } catch(e) { alert(e.message); } };
