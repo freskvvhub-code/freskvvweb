@@ -154,7 +154,8 @@
           <div class="card" style="flex:1; min-width:300px;">
             <h3 style="margin-bottom:16px;">Services</h3>
             <div class="fg"><select id="srv-cat-select"><option value="">Select Category First</option></select></div>
-            <div class="fg"><input type="text" id="srv-name" placeholder="Service Name"></div>
+            <div class="fg"><input type="text" id="srv-name-en" placeholder="Service Name (EN)"></div>
+            <div class="fg"><input type="text" id="srv-name-ar" placeholder="Service Name (AR)"></div>
             <div class="fg"><input type="text" id="srv-icon" placeholder="Icon Class (e.g. fa-solid fa-code)"></div>
             <button class="abtn" onclick="saveService()" style="width:100%; justify-content:center; margin-bottom:16px;"><i class="fa-solid fa-plus"></i> Add Service</button>
             <div id="srv-admin-list" style="display:flex; flex-direction:column; gap:8px;"></div>
@@ -188,10 +189,19 @@
         <h1 style="margin-bottom:24px;">Daily Offers Manager</h1>
         <div class="card">
           <h3 style="margin-bottom:16px;">Publish New Offer</h3>
-          <div class="fg"><label>Title</label><input type="text" id="off-title" placeholder="Offer Title"></div>
-          <div class="fg"><label>Image URL</label><input type="text" id="off-img" placeholder="https://..."></div>
-          <div class="fg"><label>Price / Deal</label><input type="text" id="off-price" placeholder="e.g. $19.99"></div>
-          <div class="fg"><label>Timer Ends (hours from now)</label><input type="number" id="off-timer" placeholder="24"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="fg"><label>Offer Title (EN)</label><input type="text" id="off-title-en" placeholder="e.g. Full Branding"></div>
+            <div class="fg"><label>Offer Title (AR)</label><input type="text" id="off-title-ar" placeholder="e.g. باقة الهوية الكاملة"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="fg"><label>Description (EN)</label><textarea id="off-desc-en" placeholder="Brief description..."></textarea></div>
+            <div class="fg"><label>Description (AR)</label><textarea id="off-desc-ar" placeholder="وصف العرض..."></textarea></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="fg"><label>Original Price</label><input type="number" id="off-original-price" placeholder="e.g. 1500"></div>
+            <div class="fg"><label>Sale Price</label><input type="number" id="off-sale-price" placeholder="e.g. 999"></div>
+          </div>
+          <div class="fg"><label>Expiration Date</label><input type="datetime-local" id="off-expiration"></div>
           <button class="abtn" onclick="saveOffer()"><i class="fa-solid fa-plus"></i> Publish Offer</button>
         </div>
         <div id="offers-admin-list" class="pkg-admin-grid"></div>

@@ -137,13 +137,32 @@ async function loadAdminServices(catId) {
     if (snap.empty) { list.innerHTML = '<p style="opacity:.4;font-size:12px;">No services.</p>'; if(sel) sel.innerHTML = '<option value="">Create a service first</option>'; return; }
     var opts = '<option value="">Select Service...</option>';
     list.innerHTML = snap.docs.map(function(doc) {
-      var s = doc.data(); opts += '<option value="' + doc.id + '">' + s.name + '</option>';
-      return '<div class="pkg-admin-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px;"><div><strong><i class="' + s.icon + '"></i> ' + s.name + '</strong></div><button class="abtn danger" style="padding:6px 12px;font-size:10px;" onclick="delService(\'' + doc.id + '\',\'' + catId + '\')"><i class="fa-solid fa-trash"></i></button></div>';
+      var s = doc.data(); opts += '<option value="' + doc.id + '">' + (s.name_en || s.name) + '</option>';
+      return '<div class="pkg-admin-item" style="display:flex;justify-content:space-between;align-items:center;padding:10px;"><div><strong><i class="' + s.icon + '"></i> ' + (s.name_en || s.name) + '</strong></div><button class="abtn danger" style="padding:6px 12px;font-size:10px;" onclick="delService(\'' + doc.id + '\',\'' + catId + '\')"><i class="fa-solid fa-trash"></i></button></div>';
     }).join('');
     if(sel) { sel.innerHTML = opts; sel.onchange = function() { loadAdminPackages(this.value); }; }
   } catch(e) { console.error('Services:', e); }
 }
-window.saveService = async function() { if (!adminGuard()) return; var catId = document.getElementById('srv-cat-select').value; var name = document.getElementById('srv-name'); var icon = document.getElementById('srv-icon'); if (!catId || !name.value) return alert('Category and Name required'); var iconVal = (icon && icon.value.trim()) ? icon.value.trim() : autoIcon(name.value); try { await db.collection('services').add({ categoryID: catId, name: name.value, icon: iconVal }); name.value = ''; if(icon) icon.value = ''; loadAdminServices(catId); } catch(e) { alert(e.message); } };
+window.saveService = async function() { 
+  if (!adminGuard()) return; 
+  var catId = document.getElementById('srv-cat-select').value; 
+  var nameEn = document.getElementById('srv-name-en'); 
+  var nameAr = document.getElementById('srv-name-ar'); 
+  var icon = document.getElementById('srv-icon'); 
+  if (!catId || !nameEn.value || !nameAr.value) return alert('Category and Names required'); 
+  var iconVal = (icon && icon.value.trim()) ? icon.value.trim() : autoIcon(nameEn.value); 
+  try { 
+    await db.collection('services').add({ 
+      categoryID: catId, 
+      name_en: nameEn.value, 
+      name_ar: nameAr.value, 
+      name: nameEn.value, 
+      icon: iconVal 
+    }); 
+    nameEn.value = ''; nameAr.value = ''; if(icon) icon.value = ''; 
+    loadAdminServices(catId); 
+  } catch(e) { alert(e.message); } 
+};
 window.delService = async function(id, catId) { if (!adminGuard()) return; if(!confirm('Delete service?')) return; try { await db.collection('services').doc(id).delete(); loadAdminServices(catId); } catch(e) { alert(e.message); } };
 
 async function loadAdminPackages(serId) {
@@ -180,7 +199,8 @@ async function loadUsersAdmin() {
     tbody.innerHTML = snap.docs.map(function(doc) {
       var u = doc.data(); var date = u.createdAt ? new Date(u.createdAt.toDate()).toLocaleDateString() : 'Unknown'; var blocked = u.blocked || false;
       var phoneStr = (u.phone || 'N/A') + (u.phoneVerified ? ' <i class="fa-solid fa-check-circle" style="color:#22c55e;font-size:12px;" title="Verified"></i>' : '');
-      return '<tr><td><strong>' + (u.email||'N/A') + '</strong><div style="font-size:10px;opacity:.4;margin-top:4px;">UID: ' + doc.id + '</div></td><td>' + phoneStr + '</td><td>' + date + '</td><td><span style="background:' + (blocked?'#f43f5e':'#22c55e') + '20;color:' + (blocked?'#f43f5e':'#22c55e') + ';padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;">' + (blocked?'BLOCKED':'ACTIVE') + '</span></td><td><button class="abtn" style="padding:6px 10px;font-size:10px;margin-right:5px;background:' + (blocked?'#22c55e':'#f43f5e') + '20;color:' + (blocked?'#22c55e':'#f43f5e') + ';" onclick="toggleUserBlock(\'' + doc.id + '\',' + blocked + ')">' + (blocked?'Unblock':'Block') + '</button><button class="abtn danger" style="padding:6px 10px;font-size:10px;" onclick="delUserAdmin(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i></button></td></tr>';
+      var waLink = u.phone ? 'https://wa.me/' + u.phone.replace(/[^0-9]/g, '') : '#';
+      return '<tr><td><strong>' + (u.email||'N/A') + '</strong><div style="font-size:10px;opacity:.4;margin-top:4px;">UID: ' + doc.id + '</div></td><td>' + phoneStr + '</td><td>' + date + '</td><td><span style="background:' + (blocked?'#f43f5e':'#22c55e') + '20;color:' + (blocked?'#f43f5e':'#22c55e') + ';padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;">' + (blocked?'BLOCKED':'ACTIVE') + '</span></td><td><a href="' + waLink + '" target="_blank" class="abtn" style="padding:6px 10px;font-size:10px;background:#25d36620;color:#25d366;"><i class="fa-brands fa-whatsapp"></i> Chat</a><button class="abtn" style="padding:6px 10px;font-size:10px;margin-right:5px;background:' + (blocked?'#22c55e':'#f43f5e') + '20;color:' + (blocked?'#22c55e':'#f43f5e') + ';" onclick="toggleUserBlock(\'' + doc.id + '\',' + blocked + ')">' + (blocked?'Unblock':'Block') + '</button><button class="abtn danger" style="padding:6px 10px;font-size:10px;" onclick="delUserAdmin(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i></button></td></tr>';
     }).join('');
   } catch(e) { console.error('Users:', e); }
 }
@@ -200,10 +220,40 @@ async function loadOffersAdmin() {
   var grid = document.getElementById('offers-admin-list'); if (!grid) return;
   try { var snap = await db.collection('offers').orderBy('createdAt','desc').get();
     if (snap.empty) { grid.innerHTML = '<p style="opacity:.4">No offers.</p>'; return; }
-    grid.innerHTML = snap.docs.map(function(doc) { var o = doc.data(); return '<div class="pkg-admin-item"><img src="' + o.image + '" style="width:100%;height:80px;object-fit:cover;border-radius:8px;margin-bottom:8px;"><h4>' + o.title + '</h4><div class="price" style="color:#f59e0b;">' + o.price + '</div><div style="font-size:11px;opacity:.5;margin-bottom:8px;">Expires: ' + o.timerHours + 'h</div><button class="abtn danger" style="margin-top:8px;" onclick="delOffer(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i> Delete</button></div>'; }).join('');
+    grid.innerHTML = snap.docs.map(function(doc) { 
+      var o = doc.data(); 
+      var expStr = o.expirationDate ? new Date(o.expirationDate).toLocaleString() : 'N/A';
+      return '<div class="pkg-admin-item"><h4>' + (o.title_en || o.title) + '</h4><p style="font-size:11px;opacity:0.7;margin:6px 0;">' + (o.description_en || o.description || '') + '</p><div style="margin:8px 0;"><span style="text-decoration:line-through;opacity:0.5;margin-right:8px;">$' + o.originalPrice + '</span><span style="color:#a855f7;font-weight:bold;">$' + o.salePrice + '</span></div><div style="font-size:11px;opacity:.5;margin-bottom:8px;"><i class="fa-regular fa-clock"></i> Expires: ' + expStr + '</div><button class="abtn danger" style="margin-top:8px;" onclick="delOffer(\'' + doc.id + '\')"><i class="fa-solid fa-trash"></i> Delete</button></div>'; 
+    }).join('');
   } catch(e) { console.error('Offers:', e); }
 }
-window.saveOffer = async function() { var t=document.getElementById('off-title'),i=document.getElementById('off-img'),p=document.getElementById('off-price'),tm=document.getElementById('off-timer'); if(!t||!t.value||!i||!i.value||!p||!p.value) return alert('Fill required fields'); try { await db.collection('offers').add({ title:t.value,image:i.value,price:p.value,timerHours:tm?parseInt(tm.value)||24:24,createdAt:firebase.firestore.FieldValue.serverTimestamp() }); t.value='';i.value='';p.value='';if(tm)tm.value=''; loadOffersAdmin(); } catch(e) { alert(e.message); } };
+window.saveOffer = async function() { 
+  var tEn = document.getElementById('off-title-en');
+  var tAr = document.getElementById('off-title-ar');
+  var dEn = document.getElementById('off-desc-en');
+  var dAr = document.getElementById('off-desc-ar');
+  var op = document.getElementById('off-original-price');
+  var sp = document.getElementById('off-sale-price');
+  var ex = document.getElementById('off-expiration');
+  if(!tEn||!tEn.value||!tAr||!tAr.value||!op||!op.value||!sp||!sp.value||!ex||!ex.value) return Swal.fire({ icon: 'error', title: 'خطأ', text: 'Please fill all required fields.', confirmButtonColor: '#b5179e' }); 
+  try { 
+    await db.collection('offers').add({ 
+      title_en: tEn.value,
+      title_ar: tAr.value,
+      title: tEn.value, // fallback
+      description_en: dEn ? dEn.value : '',
+      description_ar: dAr ? dAr.value : '',
+      description: dEn ? dEn.value : '', // fallback
+      originalPrice: parseFloat(op.value),
+      salePrice: parseFloat(sp.value),
+      expirationDate: ex.value,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+    }); 
+    tEn.value=''; tAr.value=''; if(dEn) dEn.value=''; if(dAr) dAr.value=''; op.value=''; sp.value=''; ex.value=''; 
+    loadOffersAdmin(); 
+    Swal.fire({ icon: 'success', title: 'Success', text: 'Offer created.', confirmButtonColor: '#b5179e' });
+  } catch(e) { Swal.fire({ icon: 'error', title: 'Error', text: e.message, confirmButtonColor: '#b5179e' }); } 
+};
 window.delOffer = async function(id) { if(!confirm('Delete offer?')) return; try { await db.collection('offers').doc(id).delete(); loadOffersAdmin(); } catch(e) { alert(e.message); } };
 
 /* ═══════ PROMO CODE GENERATION ═══════ */
@@ -278,7 +328,8 @@ function loadOrders() {
     tbody.innerHTML = snap.docs.map(function(doc) {
       var o = doc.data(); var st = o.status||'Pending'; var c = '#f59e0b';
       if(st==='In Progress') c='#3b82f6'; if(st==='Completed') c='#22c55e'; if(st==='Cancelled') c='#f43f5e';
-      return '<tr><td><strong>' + (o.serviceName||'N/A') + '</strong><div style="font-size:10px;opacity:.4;margin-top:4px;">' + (o.userEmail||'Guest') + '</div></td><td><div style="color:var(--accent);font-weight:700;">' + (o.senderNumber||'N/A') + '</div><div style="font-size:11px;opacity:.8;">' + (o.senderName||'N/A') + '</div></td><td>' + (o.promoCode ? '<span style="font-family:monospace;color:#f59e0b;">' + o.promoCode + '</span>' : '-') + '</td><td><span style="background:' + c + '20;color:' + c + ';padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;border:1px solid ' + c + '40;">' + st + '</span></td><td><select onchange="updOrder(\'' + doc.id + '\',this.value)"><option value="Pending"' + (st==='Pending'?' selected':'') + '>Pending</option><option value="In Progress"' + (st==='In Progress'?' selected':'') + '>In Progress</option><option value="Completed"' + (st==='Completed'?' selected':'') + '>Completed</option><option value="Cancelled"' + (st==='Cancelled'?' selected':'') + '>Cancelled</option></select></td></tr>';
+      var waLink = o.senderNumber ? 'https://wa.me/' + o.senderNumber.replace(/[^0-9]/g, '') : '#';
+      return '<tr><td><strong>' + (o.serviceName||'N/A') + '</strong><div style="font-size:10px;opacity:.4;margin-top:4px;">' + (o.userEmail||'Guest') + '</div></td><td><div style="color:var(--accent);font-weight:700;">' + (o.senderNumber||'N/A') + '</div><div style="font-size:11px;opacity:.8;">' + (o.senderName||'N/A') + '</div><a href="' + waLink + '" target="_blank" style="font-size:10px;color:#25d366;text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> WhatsApp User</a></td><td>' + (o.promoCode ? '<span style="font-family:monospace;color:#f59e0b;">' + o.promoCode + '</span>' : '-') + '</td><td><span style="background:' + c + '20;color:' + c + ';padding:4px 12px;border-radius:20px;font-size:10px;font-weight:800;border:1px solid ' + c + '40;">' + st + '</span></td><td><select onchange="updOrder(\'' + doc.id + '\',this.value)"><option value="Pending"' + (st==='Pending'?' selected':'') + '>Pending</option><option value="In Progress"' + (st==='In Progress'?' selected':'') + '>In Progress</option><option value="Completed"' + (st==='Completed'?' selected':'') + '>Completed</option><option value="Cancelled"' + (st==='Cancelled'?' selected':'') + '>Cancelled</option></select></td></tr>';
     }).join('');
   });
 }

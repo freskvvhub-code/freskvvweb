@@ -63,6 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
   try { initPromoCode(); } catch (e) { }
   try { initForgotPassword(); } catch (e) { }
   try { initProfileEdit(); } catch (e) { }
+  renderOffers();
   renderCategories();
   renderProjects();
 });
@@ -395,9 +396,10 @@ window.renderServices = function (catId, catName) {
       if (snap.empty) { grid.innerHTML = '<p style="opacity:.4;text-align:center;grid-column:1/-1;">No services in this category.</p>'; return; }
       grid.innerHTML = snap.docs.map(function (doc) {
         var s = doc.data();
-        return '<div class="pkg-card glass-panel" style="cursor:pointer;" onclick="renderPackages(\'' + doc.id + '\', \'' + s.name.replace(/'/g, "\\'") + '\', \'' + catName.replace(/'/g, "\\'") + '\')">' +
+        var displayName = _currentLang === 'ar' ? (s.name_ar || s.name_en || s.name) : (s.name_en || s.name);
+        return '<div class="pkg-card glass-panel" style="cursor:pointer;" onclick="renderPackages(\'' + doc.id + '\', \'' + displayName.replace(/'/g, "\\'") + '\', \'' + catName.replace(/'/g, "\\'") + '\')">' +
           '<div class="pkg-icon"><i class="' + (s.icon || 'fa-solid fa-briefcase') + '"></i></div>' +
-          '<h3 class="pkg-title">' + s.name + '</h3></div>';
+          '<h3 class="pkg-title">' + displayName + '</h3></div>';
       }).join('');
     });
   } catch (e) { }
@@ -488,6 +490,86 @@ function initPromoCode() {
       fb.style.color = '#22c55e';
       fb.textContent = '✓ Code applied! You save $' + discount.toFixed(2);
     } catch (e) { fb.style.color = '#f43f5e'; fb.textContent = 'Error: ' + e.message; }
+  });
+}
+
+/* ═══════ OFFERS ═══════ */
+function renderOffers() {
+  var grid = document.getElementById('offers-grid');
+  if (!grid) return;
+  
+  if (window._offersTimer) clearInterval(window._offersTimer);
+  
+  db.collection('offers').onSnapshot(function(snap) {
+    if (snap.empty) { 
+      grid.innerHTML = '<div class="offer-empty"><i class="fa-solid fa-hourglass-half fa-bounce"></i><h3>سيتم توفير العروض قريباً 🚀 ... نحن نجهز لك باقات حصرية ومفاجآت لا تُفوت!</h3></div>';
+      return; 
+    }
+    
+    var activeOffers = [];
+    var now = new Date().getTime();
+    
+    snap.docs.forEach(function(doc) {
+      var o = doc.data();
+      var expTime = o.expirationDate ? new Date(o.expirationDate).getTime() : 0;
+      if (expTime > now) {
+        o.id = doc.id;
+        o.expTime = expTime;
+        activeOffers.push(o);
+      }
+    });
+    
+    if (activeOffers.length === 0) {
+      grid.innerHTML = '<div class="offer-empty"><i class="fa-solid fa-hourglass-half fa-bounce"></i><h3>سيتم توفير العروض قريباً 🚀 ... نحن نجهز لك باقات حصرية ومفاجآت لا تُفوت!</h3></div>';
+      return;
+    }
+    
+    grid.innerHTML = activeOffers.map(function(o) {
+      var displayTitle = _currentLang === 'ar' ? (o.title_ar || o.title_en || o.title) : (o.title_en || o.title);
+      var displayDesc = _currentLang === 'ar' ? (o.description_ar || o.description_en || o.description || '') : (o.description_en || o.description || '');
+      var btnText = _currentLang === 'ar' ? 'أطلب العرض الآن' : 'Claim Offer Now';
+      
+      return '<div class="offer-card" id="offer-' + o.id + '">' +
+        '<h3 style="font-size:20px;font-weight:800;margin-bottom:8px;">' + displayTitle + '</h3>' +
+        '<p style="font-size:13px;opacity:0.7;margin-bottom:16px;">' + displayDesc + '</p>' +
+        '<div class="offer-price-container">' +
+          '<span class="offer-original-price">$' + o.originalPrice + '</span>' +
+          '<span class="offer-sale-price">$' + o.salePrice + '</span>' +
+        '</div>' +
+        '<div class="offer-timer" id="timer-' + o.id + '">--:--:--:--</div>' +
+        '<button class="offer-claim-btn" onclick="window.selectPackage(\'' + displayTitle.replace(/'/g,"\\'") + ' (Offer)\', ' + o.salePrice + ', \'offer\')"><i class="fa-solid fa-bolt"></i> ' + btnText + '</button>' +
+      '</div>';
+    }).join('');
+    
+    // Start countdowns
+    window._offersTimer = setInterval(function() {
+      var currentTime = new Date().getTime();
+      var anyExpired = false;
+      
+      activeOffers.forEach(function(o) {
+        var el = document.getElementById('timer-' + o.id);
+        if (!el) return;
+        var diff = o.expTime - currentTime;
+        
+        if (diff <= 0) {
+          el.textContent = 'EXPIRED';
+          document.getElementById('offer-' + o.id).style.opacity = '0.4';
+          document.getElementById('offer-' + o.id).style.pointerEvents = 'none';
+          anyExpired = true;
+        } else {
+          var d = Math.floor(diff / (1000 * 60 * 60 * 24));
+          var h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          var m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          var s = Math.floor((diff % (1000 * 60)) / 1000);
+          el.textContent = (d < 10 ? '0'+d : d) + 'd ' + (h < 10 ? '0'+h : h) + 'h ' + (m < 10 ? '0'+m : m) + 'm ' + (s < 10 ? '0'+s : s) + 's';
+        }
+      });
+      
+      if (anyExpired) {
+        // Optionally refresh list if needed
+      }
+    }, 1000);
+    
   });
 }
 
@@ -624,11 +706,32 @@ function initButtons() {
         sender: 'admin', timestamp: firebase.firestore.FieldValue.serverTimestamp()
       });
 
-      alert('Order submitted successfully!');
-      document.getElementById('order-modal').classList.add('hidden');
       if (sNumber) sNumber.value = '';
       if (sName) sName.value = '';
       window._appliedPromo = null;
+      
+      document.getElementById('order-modal').classList.add('hidden');
+      
+      Swal.fire({
+        title: _currentLang === 'ar' ? 'جاري المعالجة... ⏳' : 'Processing... ⏳',
+        html: _currentLang === 'ar' ? 'يرجى الانتظار بينما نقوم بتجهيز طلبك' : 'Please wait while we process your order',
+        allowOutsideClick: false,
+        didOpen: () => { Swal.showLoading(); }
+      });
+      
+      setTimeout(() => {
+        Swal.fire({
+          icon: 'success',
+          title: _currentLang === 'ar' ? 'تم بنجاح! 🎉' : 'Success! 🎉',
+          text: _currentLang === 'ar' ? 'جاري تجهيز طلبك.. شكراً لثقتك في Freskvv Tec!' : 'Processing your order.. Thank you for choosing Freskvv Tec!',
+          confirmButtonColor: '#22c55e',
+          timer: 3000,
+          timerProgressBar: true
+        }).then(() => {
+          document.getElementById('live-chat-panel').classList.remove('hidden');
+          loadLiveChat();
+        });
+      }, 1500);
     } catch (ex) { alert('Error: ' + ex.message); }
   });
 }
@@ -637,11 +740,36 @@ function initButtons() {
 function initLanguageToggle() {
   var btn = document.getElementById('lang-toggle-btn');
   if (!btn) return;
+  
+  var savedLang = localStorage.getItem('fh_lang') || 'en';
+  _currentLang = savedLang;
+  
+  function applyLang() {
+    btn.innerHTML = '<i class="fa-solid fa-globe"></i> ' + (_currentLang === 'en' ? 'عربية' : 'EN');
+    document.documentElement.dir = _currentLang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = _currentLang;
+    document.querySelectorAll('[data-en]').forEach(function (el) { 
+      var arText = el.getAttribute('data-ar');
+      var enText = el.getAttribute('data-en');
+      if (_currentLang === 'ar' && arText) {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = arText;
+        else el.innerHTML = arText;
+      } else if (enText) {
+        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = enText;
+        else el.innerHTML = enText;
+      }
+    });
+  }
+  
+  applyLang();
+
   btn.addEventListener('click', function () {
     _currentLang = _currentLang === 'en' ? 'ar' : 'en';
-    btn.textContent = _currentLang === 'en' ? 'ع' : 'EN';
-    document.querySelectorAll('[data-en]').forEach(function (el) { el.textContent = el.getAttribute('data-' + _currentLang); });
-    document.documentElement.dir = _currentLang === 'ar' ? 'rtl' : 'ltr';
+    localStorage.setItem('fh_lang', _currentLang);
+    applyLang();
+    // Re-render dynamic content to reflect the new language
+    if (typeof renderOffers === 'function') renderOffers();
+    if (typeof renderCategories === 'function') renderCategories();
   });
 }
 
@@ -706,11 +834,16 @@ function initProfileEdit() {
       if (el2 && un) el2.textContent = '@' + un;
       var el3 = document.getElementById('user-display-email');
       if (el3 && em) el3.textContent = em;
-      Swal.fire({ icon: 'success', title: 'تم', text: 'تم تحديث الملف الشخصي بنجاح!', confirmButtonColor: '#b5179e' });
-    } catch (e) {
-      Swal.fire({ icon: 'error', title: 'خطأ', text: translateAuthError(e) + (e.code === 'auth/requires-recent-login' ? ' (يرجى تسجيل الخروج والدخول مجدداً لتغيير البيانات الحساسة)' : ''), confirmButtonColor: '#b5179e' });
+      
+      Swal.fire({ icon: 'success', title: _currentLang === 'ar' ? 'تم' : 'Success', text: _currentLang === 'ar' ? 'تم تحديث الملف الشخصي بنجاح!' : 'Profile updated successfully!', confirmButtonColor: '#b5179e' });
+    } catch (ex) {
+      var msg = translateAuthError(ex);
+      if (ex.code === 'auth/requires-recent-login') {
+        msg = _currentLang === 'ar' ? 'يرجى تسجيل الخروج ثم الدخول مرة أخرى لتغيير البريد الإلكتروني.' : 'Please logout and login again to change your email.';
+      }
+      Swal.fire({ icon: 'error', title: 'خطأ', text: msg, confirmButtonColor: '#b5179e' });
     } finally {
-      btn.innerHTML = '<i class="fa-solid fa-save"></i> Save Changes';
+      btn.innerHTML = '<i class="fa-solid fa-save"></i> ' + (_currentLang === 'ar' ? 'حفظ التعديلات' : 'Save Changes');
     }
   });
 }

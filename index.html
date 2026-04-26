@@ -107,7 +107,30 @@
       <!-- Populated by app.js -->
     </div>
   </section>
+  <style>
+    .offer-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 16px; padding: 24px; transition: 0.3s; position: relative; overflow: hidden; }
+    .offer-card:hover { border-color: #a855f7; box-shadow: 0 0 20px rgba(168, 85, 247, 0.2); transform: translateY(-5px); }
+    .offer-price-container { margin: 16px 0; display: flex; align-items: center; gap: 12px; }
+    .offer-original-price { text-decoration: line-through; opacity: 0.5; font-size: 14px; }
+    .offer-sale-price { color: #a855f7; font-size: 24px; font-weight: 900; text-shadow: 0 0 10px rgba(168, 85, 247, 0.5); }
+    .offer-timer { display: flex; gap: 8px; margin-bottom: 20px; font-family: monospace; font-size: 14px; font-weight: bold; color: #f8fafc; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; justify-content: center;}
+    .offer-claim-btn { width: 100%; background: #a855f7; color: #fff; border: none; padding: 12px; border-radius: 8px; font-weight: 800; cursor: pointer; transition: 0.3s; animation: pulse-btn 2s infinite; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .offer-claim-btn:hover { background: #9333ea; box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); }
+    @keyframes pulse-btn { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+    .offer-empty { text-align: center; padding: 60px 20px; color: #94a3b8; grid-column: 1/-1; }
+    .offer-empty i { font-size: 48px; color: #a855f7; margin-bottom: 16px; text-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+  </style>
 
+  <!-- ══════════ OFFERS SECTION ══════════ -->
+  <section id="offers" class="section-offers" style="padding:60px 20px;">
+    <div class="section-header">
+      <h2 class="section-title" data-en="Exclusive Offers" data-ar="العروض الحصرية">Exclusive Offers</h2>
+      <p style="opacity:0.6;margin-top:8px;" data-en="Limited time deals you can't miss!" data-ar="صفقات لفترة محدودة لا تفوتها!">Limited time deals you can't miss!</p>
+    </div>
+    <div id="offers-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;max-width:1100px;margin:0 auto;">
+      <!-- Offers injected here -->
+    </div>
+  </section>
   <!-- ══════════ PROJECTS SECTION ══════════ -->
   <section id="projects" class="section-projects">
     <div class="section-header">
