@@ -194,15 +194,19 @@ function initAuthUI() {
   if (vCheck) vCheck.addEventListener('click', async function () {
     if (firebase.auth().currentUser) {
       vCheck.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
-      await firebase.auth().currentUser.reload();
-      if (firebase.auth().currentUser.emailVerified) {
-        document.getElementById('verify-shield-modal').classList.add('hidden');
-        Swal.fire({ icon: 'success', title: 'Verified!', text: 'Your email has been verified.', confirmButtonColor: '#b5179e' });
-        firebase.auth().onAuthStateChanged(function (u) { });
-        location.reload();
-      } else {
+      try {
+        await firebase.auth().currentUser.reload();
+        if (firebase.auth().currentUser.emailVerified) {
+          document.getElementById('verify-shield-modal').classList.add('hidden');
+          Swal.fire({ icon: 'success', title: 'تم التفعيل', text: 'تم توثيق بريدك الإلكتروني بنجاح.', confirmButtonColor: '#b5179e' });
+          location.reload();
+        } else {
+          vCheck.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Check Again';
+          Swal.fire({ icon: 'info', title: 'غير مفعل', text: 'لسه مفعلتش حسابك، شيك على الإيميل', confirmButtonColor: '#b5179e' });
+        }
+      } catch (ex) {
         vCheck.innerHTML = '<i class="fa-solid fa-rotate-right"></i> Check Again';
-        Swal.fire({ icon: 'info', title: 'Not Verified', text: 'Email is still not verified. Please check your inbox.', confirmButtonColor: '#b5179e' });
+        Swal.fire({ icon: 'error', title: 'خطأ', text: translateAuthError(ex), confirmButtonColor: '#b5179e' });
       }
     }
   });
@@ -212,9 +216,9 @@ function initAuthUI() {
       vResend.disabled = true;
       try {
         await firebase.auth().currentUser.sendEmailVerification();
-        Swal.fire({ icon: 'success', title: 'Sent!', text: 'Verification link has been resent.', confirmButtonColor: '#b5179e' });
+        Swal.fire({ icon: 'success', title: 'تم', text: 'تم إرسال رابط جديد، تفقد البريد المزعج (Spam)', confirmButtonColor: '#b5179e' });
       } catch (ex) {
-        Swal.fire({ icon: 'error', title: 'Error', text: translateAuthError(ex), confirmButtonColor: '#b5179e' });
+        Swal.fire({ icon: 'error', title: 'خطأ', text: translateAuthError(ex), confirmButtonColor: '#b5179e' });
       } finally {
         setTimeout(function () { vResend.disabled = false; }, 30000); // Prevent spam
       }
